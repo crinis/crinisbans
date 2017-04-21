@@ -1,0 +1,9 @@
+wordpress/.sass-cache/
+wordpress/node_modules/*/
+wordpress/node_modules/*
+wordpress/crinisbans/dist/*
+wordpress/crinisbans/vendor/*
+volumes/*
+wordpress/tests/_output/*
+wordpress/wpcs/*
+wordpress/wpcs/*/

@@ -1,0 +1,60 @@
+version: '2.1'
+services:
+  webserver:
+    image: crinis/wordpress-apache:dev
+    container_name: webserver
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_USER: wordpress
+    links:
+    - db:db
+    volumes:
+    - ./wordpress/crinisbans:/var/www/html/wp-content/plugins/crinisbans
+    - ./volumes/html:/var/www/html
+    ports:
+    - 80:80
+    - 9001:9000
+    networks:
+      app_net:
+        ipv4_address: 172.16.250.21
+    extra_hosts:
+      - "docker-host:192.168.192.27"
+  db:
+    image: percona:latest
+    container_name: db
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_PASSWORD: wordpress
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: wordpress
+    volumes:
+    - ./volumes/mysql:/var/lib/mysql
+    ports:
+    - 3306:3306
+    networks:
+      app_net:
+        ipv4_address: 172.16.250.23
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    environment:
+      PMA_HOST: db
+      PMA_PORT: '3306'
+      PMA_USER: root
+      PMA_PASSWORD: root
+    links:
+    - db:db
+    ports:
+    - 8080:80
+    networks:
+      app_net:
+        ipv4_address: 172.16.250.24
+networks:
+  app_net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.16.250.0/24
+        gateway: 172.16.250.1

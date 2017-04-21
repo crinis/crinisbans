@@ -1,0 +1,58 @@
+version: '2.1'
+services:
+  webserver:
+    image: crinis/wordpress-apache:dev
+    container_name: webserver-testing
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_PASSWORD: user
+      WORDPRESS_DB_USER: user
+    links:
+    - db:db
+    volumes:
+    - ./volumes/html-testing:/var/www/html
+    expose:
+    - 80
+    extra_hosts:
+      - "docker-host:192.168.192.30"
+    networks:
+      app_net:
+        ipv4_address: 172.16.228.12
+  db:
+    image: percona:latest
+    container_name: db-testing
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_PASSWORD: user
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: user
+    volumes:
+    - ./volumes/mysql-testing:/var/lib/mysql
+    expose:
+    - 3306
+    networks:
+      app_net:
+        ipv4_address: 172.16.228.13
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin-testing
+    environment:
+      PMA_HOST: db
+      PMA_PORT: '3306'
+      PMA_USER: root
+      PMA_PASSWORD: root
+    links:
+    - db:db
+    expose:
+    - 80
+    networks:
+      app_net:
+        ipv4_address: 172.16.228.14
+networks:
+  app_net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.16.228.0/24
+        gateway: 172.16.228.1
