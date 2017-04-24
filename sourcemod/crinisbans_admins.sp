@@ -2,7 +2,7 @@
 * Crinisbans: Admins
 *
 * @author crinis
-* @version v0.1.0
+* @version v0.1.1
 * @link https://www.crinis.org
 */
 
