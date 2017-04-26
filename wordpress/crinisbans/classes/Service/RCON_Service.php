@@ -21,7 +21,7 @@ class RCON_Service {
 				$this->condenser_server->initSocket();
 				$this->condenser_server->rconAuth( $this->server->get_rcon_password() );
 			}
-		} catch ( \SteamCondenserException $e ) {
+		} catch ( \Exception $e ) {
 			return false;
 		}
 		return true;
@@ -34,8 +34,8 @@ class RCON_Service {
 	private function exec_rcon( $command ) {
 		try {
 			return $this->condenser_server->rconExec( $command );
-		} catch ( \SteamCondenserException $e ) {
-			return null;
+		} catch ( \Exception $e ) {
+			return false;
 		}
 	}
 
@@ -53,8 +53,8 @@ class RCON_Service {
 					$server_players[] = $player;
 				}
 			}
-		} catch ( \SteamCondenserException $e ) {
-			return null;
+		} catch ( \Exception $e ) {
+			return false;
 		}
 		return $server_players;
 	}

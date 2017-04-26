@@ -99,6 +99,8 @@ class Crinisbans {
 		$filters = $this->container->get( 'crinis\cb\Model\Filters' );
 		$this->loader->add_filter( 'cb_json_serialize', $filters,'json_serialize', 10, 2 );
 		$this->loader->add_filter( 'cron_schedules', $filters,'cron_schedules' );
+		$this->loader->add_filter( 'comments_open', $filters,'close_ban_comments' );
+		$this->loader->add_filter( 'comments_array', $filters,'hide_ban_comments' );
 	}
 
 	public function activate() {

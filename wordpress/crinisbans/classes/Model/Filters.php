@@ -56,4 +56,18 @@ class Filters {
 		}
 		return $schedules;
 	}
+
+	public function close_ban_comments() {
+		if ( 'cb-bans' === get_post_type() && ! current_user_can( 'cb_ban' ) ) {
+			return false;
+		}
+		return true;
+	}
+
+	public function hide_ban_comments( $comments ) {
+		if ( 'cb-bans' === get_post_type() && ! current_user_can( 'cb_ban' ) ) {
+			return null;
+		}
+		return $comments;
+	}
 }

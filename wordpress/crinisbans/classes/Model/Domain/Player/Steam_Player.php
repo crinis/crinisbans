@@ -23,7 +23,7 @@ class Steam_Player extends Player {
 
 		try {
 			$this->steam_profile = \SteamId::create( sanitize_text_field( $player_id ) );
-		} catch ( \SteamCondenserException $e ) {
+		} catch ( \Exception $e ) {
 			if ( isset( $this->steam_id ) && isset( $this->steam_id_64 ) ) {
 				$this->nickname = $this->steam_id_64;
 				return true;
