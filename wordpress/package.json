@@ -1,6 +1,6 @@
 {
   "name": "crinisbans",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "main": "dist/app.bundle.js",
   "repository": "git@bitbucket.org:crinis/wp_crinisbans.git",
   "author": "crinis <postmaster@crinis.org>",
