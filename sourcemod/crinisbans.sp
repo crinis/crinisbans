@@ -2,15 +2,16 @@
 * Crinisbans: Core
 *
 * @author crinis
-* @version v0.2.0
+* @version v0.2.1
 * @link https://www.crinis.org
 */
+
+#pragma newdecls required
+#pragma semicolon 1
 
 #include <sourcemod>
 #include <crinisbans>
 #include <regex>
-#pragma newdecls required
-#pragma semicolon 1
 
 public Plugin myinfo =
 {
@@ -21,33 +22,34 @@ public Plugin myinfo =
     url         = "https://www.crinis.org"
 };
 
-Database gCbDb;
+Database crinisbansDatabase;
 
-int gIConnectLock = 0;
-int gISequence = 0;
+int connectLock = 0;
+int sequence = 0;
 
-ConVar gWPTablePrefix;
+ConVar tablePrefixCvar;
 
-Handle gCbOnConnect;
+Handle onConnectForward;
 
-public APLRes AskPluginLoad2(Handle myself, bool bLate, char[] sError, int iErrMax)
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int maxErrors)
 {
-	CreateNative("CBConnect",		Native_DBConnect);
-	CreateNative("CBQuery", 		Native_DBQuery);
-	CreateNative("CBEscape",		Native_DBEscape);
-	CreateNative("CBIsDBConnected", Native_IsDBConnected);
-	CreateNative("CBInit", 			Native_Init);
-	CreateNative("CBClientCheck", 	Native_ClientCheck);
-	
-	RegPluginLibrary("crinisbans");
+    CreateNative("CBConnect",		Native_Connect);
+    CreateNative("CBQuery", 		Native_Query);
+    CreateNative("CBEscapeQuery",		Native_EscapeQuery);
+    CreateNative("CBIsConnected", Native_IsConnected);
+    CreateNative("CBInit", 			Native_Init);
+    CreateNative("CBCheckClient", 	Native_CheckClient);
+    
+    RegPluginLibrary("crinisbans");
 
-	return APLRes_Success;
+    return APLRes_Success;
 }
 
-public void OnPluginStart(){
-	gWPTablePrefix = CreateConVar("cb_table_prefix", "wp_", "Prefix of Wordpress tables");
-	AutoExecConfig(true, "crinisbans");
-	gCbOnConnect = CreateGlobalForward("CB_OnConnect", ET_Event, Param_Cell);
+public void OnPluginStart()
+{
+    tablePrefixCvar = CreateConVar("cb_table_prefix", "wp_", "Prefix of Wordpress tables");
+    AutoExecConfig(true, "crinisbans");
+    onConnectForward = CreateGlobalForward("CB_OnConnect", ET_Event, Param_Cell);
 }
 
 public void OnMapStart()
@@ -57,158 +59,173 @@ public void OnMapStart()
 
 public void OnMapEnd()
 {
-    gIConnectLock = 0;
-    delete gCbDb;
+    connectLock = 0;
+    delete crinisbansDatabase;
 }
 
-public int Native_Init(Handle plugin, int iNumParams){
-	
-
-}
-
-public int Native_ClientCheck(Handle plugin, int iNumParams){
-	int iClient = GetNativeCell(1);
-	if(IsClientInGame(iClient) && IsClientConnected(iClient) && !IsFakeClient(iClient))
-		return true;
-	else
-		return false;
-}
-
-public int Native_DBConnect(Handle plugin, int iNumParams){
-	if (gIConnectLock) {
-		return;
-	}
-	gIConnectLock = ++gISequence;
-
-	#if defined _DEBUG
-		PrintToServer("Trying to connect to database: gIConnectLock=%d",gIConnectLock);
-	#endif
-	Database.Connect(OnDBConnect, SQL_CheckConfig("crinisbans") ? "crinisbans" : "default", gIConnectLock);
+public int Native_Init(Handle plugin, int numParams){
+    
 
 }
 
-public void OnDBConnect(Database db, const char[] sError, any data){
-
-	#if defined _DEBUG
-		PrintToServer("OnDBConnect(%x, %d) gIConnectLock=%d", db, data, gIConnectLock);
-	#endif
-
-	/**
-	 * If this happens to be an old connection request, ignore it.
-	 */
-	if (data != gIConnectLock || gCbDb != null)
-	{
-		if(db){
-			delete db;
-		}
-		return;
-	}
-
-	gIConnectLock = 0;
-	gCbDb = db;
-
-	if(gCbDb == null){
-		LogError("Failed to connect to database: %s", sError);
-		return;
-	}
-	gCbDb.SetCharset("utf8");
-	Call_StartForward(gCbOnConnect);
-    Call_PushCell(gCbDb);
-	Call_Finish();
-}
-
-public int Native_IsDBConnected(Handle plugin, int iNumParams)
+public int Native_CheckClient(Handle plugin, int numParams)
 {
-	return !!gCbDb;
+    int client = GetNativeCell(1);
+    if(IsClientInGame(client) && IsClientConnected(client) && !IsFakeClient(client))
+    {
+        return true;
+    } 
+    else 
+    {
+        return false;
+    }
 }
 
-public int Native_DBEscape(Handle plugin, int iNumParams)
+public int Native_Connect(Handle plugin, int numParams)
+{
+    if (connectLock) 
+    {
+        return;
+    }
+
+    connectLock = ++sequence;
+
+    #if defined _DEBUG
+        PrintToServer("Trying to connect to crinisbansDatabase: connectLock=%d",connectLock);
+    #endif
+    Database.Connect(OnConnect, SQL_CheckConfig("crinisbans") ? "crinisbans" : "default", connectLock);
+
+}
+
+public void OnConnect(Database db, const char[] error, any data)
 {
 
-    int iLength = GetNativeCell(3);
-    if (iLength <= 0) {
+    #if defined _DEBUG
+        PrintToServer("OnConnect(%x, %d) connectLock=%d", db, data, connectLock);
+    #endif
+
+    /**
+        * If this happens to be an old connection request, ignore it.
+        */
+    if (data != connectLock || crinisbansDatabase != null)
+    {
+        if(db)
+        {
+            delete db;
+        }
+        return;
+    }
+
+    connectLock = 0;
+    crinisbansDatabase = db;
+
+    if(crinisbansDatabase == null)
+    {
+        LogError("Failed to connect to crinisbansDatabase: %s", error);
+        return;
+    }
+    crinisbansDatabase.SetCharset("utf8");
+    Call_StartForward(onConnectForward);
+    Call_PushCell(crinisbansDatabase);
+    Call_Finish();
+}
+
+public int Native_IsConnected(Handle plugin, int numParams)
+{
+    return !!crinisbansDatabase;
+}
+
+public int Native_EscapeQuery(Handle plugin, int numParams)
+{
+
+    int queryLength = GetNativeCell(3);
+    if (queryLength <= 0) 
+    {
         return false;
     }
 
-    char[] sToEscape = new char[iLength];
-	char[] sEscaped = new char[iLength];
+    char[] queryToEscape = new char[queryLength];
+    char[] escapedQuery = new char[queryLength];
 
-    GetNativeString(1, sToEscape, iLength);
+    GetNativeString(1, queryToEscape, queryLength);
 
-    bool success = gCbDb.Escape(sToEscape, sEscaped, iLength);
+    bool success = crinisbansDatabase.Escape(queryToEscape, escapedQuery, queryLength);
 
-    SetNativeString(2, sEscaped, iLength);
+    SetNativeString(2, escapedQuery, queryLength);
 
     return success;
 }
 
-public int Native_DBQuery(Handle smPlugin, int iNumParams)
+public int Native_Query(Handle plugin, int numParams)
 {
-    if (!CBIsDBConnected()) {
-    	#if defined _DEBUG
-			PrintToServer("DB is not connected");
-		#endif
+    if (!CBIsConnected()) 
+    {
+        #if defined _DEBUG
+            PrintToServer("DB is not connected");
+        #endif
         return;
     }
 
-    char sQuery[4096];
-    GetNativeString(2, sQuery, sizeof(sQuery));
+    char query[4096];
+    GetNativeString(2, query, sizeof(query));
 
-    Function callbackFunction = GetNativeFunction(1);
+    Function callback = GetNativeFunction(1);
     any data = GetNativeCell(3);
     DBPriority priority = GetNativeCell(4);
 
     DataPack hPack = new DataPack();
-    hPack.WriteCell(smPlugin);
-    hPack.WriteFunction(callbackFunction);
+    hPack.WriteCell(plugin);
+    hPack.WriteFunction(callback);
     hPack.WriteCell(data);
 
-    DBExecuteQuery(DBQueryCallback, sQuery, hPack, priority);
+    SendQuery(QueryCallback, query, hPack, priority);
 }
 
-void DBQueryCallback(Database db, DBResultSet results, const char[] sError, DataPack pack){
-	pack.Reset();
-	if (sError[0]) {
-        LogError("Query failed: %s", sError);
+void QueryCallback(Database db, DBResultSet results, const char[] error, DataPack pack)
+{
+    pack.Reset();
+    if (error[0]) 
+    {
+        LogError("Query failed: %s", error);
         return;
     }
-	Handle smPlugin = pack.ReadCell();
-	Function callbackFunction = pack.ReadFunction();	
-	any data = pack.ReadCell();
-	delete pack;
+    Handle plugin = pack.ReadCell();
+    Function callback = pack.ReadFunction();	
+    any data = pack.ReadCell();
+    delete pack;
 
-	Call_StartFunction(smPlugin, callbackFunction);
-	Call_PushCell(db);
-	Call_PushCell(results);
-	Call_PushString(sError);
-	Call_PushCell(data);
-	Call_Finish();
+    Call_StartFunction(plugin, callback);
+    Call_PushCell(db);
+    Call_PushCell(results);
+    Call_PushString(error);
+    Call_PushCell(data);
+    Call_Finish();
 }
 
 
-void DBExecuteQuery(SQLQueryCallback callbackFunction, char sQuery[4096], any data = 0, DBPriority priority = DBPrio_Normal){
+void SendQuery(SQLQueryCallback callback, char query[4096], any data = 0, DBPriority priority = DBPrio_Normal)
+{
+    char searchString[65], replaceString[65], table[65], tablePrefix[65];
 
-
-    // Format {{table}} as DatabasePrefixtable
-    char sSearch[65], sReplace[65], sTable[65], sWPTablePrefix[65];
-
-    GetConVarString(gWPTablePrefix, sWPTablePrefix, sizeof(sWPTablePrefix));
+    GetConVarString(tablePrefixCvar, tablePrefix, sizeof(tablePrefix));
 
     static Regex tableRegex;
-    if (!tableRegex) {
+    if (!tableRegex) 
+    {
         tableRegex = new Regex("\\{\\{([0-9a-zA-Z\\$_]+?)\\}\\}");
     }
 
-    while (tableRegex.Match(sQuery) > 0) {
-        tableRegex.GetSubString(0, sSearch, sizeof(sSearch));
-        tableRegex.GetSubString(1, sTable,  sizeof(sTable));
-        Format(sReplace, sizeof(sReplace), "%s%s", sWPTablePrefix, sTable);
-        ReplaceString(sQuery, sizeof(sQuery), sSearch, sReplace);
-	}
-	
-	#if defined _DEBUG
-		PrintToServer("Executing query: %s", sQuery);
-	#endif
+    while (tableRegex.Match(query) > 0) 
+    {
+        tableRegex.GetSubString(0, searchString, sizeof(searchString));
+        tableRegex.GetSubString(1, table,  sizeof(table));
+        Format(replaceString, sizeof(replaceString), "%s%s", tablePrefix, table);
+        ReplaceString(query, sizeof(query), searchString, replaceString);
+    }
+    
+    #if defined _DEBUG
+        PrintToServer("Executing query: %s", query);
+    #endif
 
-	gCbDb.Query(callbackFunction, sQuery, data, priority);
+    crinisbansDatabase.Query(callback, query, data, priority);
 }

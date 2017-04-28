@@ -2,21 +2,20 @@
 * Crinisbans: Admins
 *
 * @author crinis
-* @version v0.2.0
+* @version v0.2.1
 * @link https://www.crinis.org
 */
+#pragma newdecls required
+#pragma semicolon 1
 
 #include <sourcemod>
 #include <crinisbans>
 #undef REQUIRE_PLUGIN
 
-#pragma newdecls required
-#pragma semicolon 1
-
-int gISequence = 0;								/** Global unique iSequence number */
-int gIRebuildCachePart[3] = {0};					/** Cache part iSequence numbers */
-int gIPlayerSec[MAXPLAYERS+1];					/** Player-specific iSequence numbers */
-bool gIPlayerAuth[MAXPLAYERS+1];				/** Whether a player has been "pre-authed" */
+int sequence = 0;								/** Global unique currentSequence number */
+int rebuildCachePart[3] = {0};					/** Cache part currentSequence numbers */
+int playerSec[MAXPLAYERS+1];					/** Player-specific currentSequence numbers */
+bool playerAuth[MAXPLAYERS+1];				/** Whether a player has been "pre-authed" */
 
 
 public Plugin myinfo =
@@ -30,491 +29,504 @@ public Plugin myinfo =
 
 public void OnPluginStart(){
 
-	if (LibraryExists("crinisbans")) {
-		CBInit();
-	}
+    if (LibraryExists("crinisbans")) 
+    {
+        CBInit();
+    }
 
 }
 
 public void OnConfigsExecuted()
 {
-    if (DisablePlugin("admin-sql-prefetch") | DisablePlugin("admin-sql-threaded") | DisablePlugin("sql-admin-manager")) {
+    if (DisablePlugin("admin-sql-prefetch") | DisablePlugin("admin-sql-threaded") | DisablePlugin("sql-admin-manager")) 
+    {
         // Reload admins
         DumpAdminCache(AdminCache_Groups, true);
         DumpAdminCache(AdminCache_Admins, true);
     }
 }
 
-public bool OnClientConnect(int iClient, char[] rejectMsg, int maxLen)
+public bool OnClientConnect(int client, char[] rejectMessage, int maxLength)
 {
-	gIPlayerSec[iClient] = 0;
-	gIPlayerAuth[iClient] = false;
-	return true;
+    playerSec[client] = 0;
+    playerAuth[client] = false;
+    return true;
 }
 
-public void OnClientDisconnect(int iClient)
+public void OnClientDisconnect(int client)
 {
-	gIPlayerSec[iClient] = 0;
-	gIPlayerAuth[iClient] = false;
+    playerSec[client] = 0;
+    playerAuth[client] = false;
 }
 
 public void OnRebuildAdminCache(AdminCachePart part)
 {
-	/**
-	 * Mark this part of the cache as being rebuilt.  This is used by the 
-	 * callback system to determine whether the results should still be 
-	 * used.
-	 */
-	int iSequence = ++gISequence;
-	gIRebuildCachePart[part] = iSequence;
-	
-	if(!CBIsDBConnected()){
-		CBConnect();
-		return;
-	}
+    /**
+     * Mark this part of the cache as being rebuilt.  This is used by the 
+     * callback system to determine whether the results should still be 
+     * used.
+     */
+    int currentSequence = ++sequence;
+    rebuildCachePart[part] = currentSequence;
+    
+    if(!CBIsConnected())
+    {
+        CBConnect();
+        return;
+    }
 
-	if (part == AdminCache_Groups) {
-		FetchGroups(iSequence);
-	} else if (part == AdminCache_Admins) {
-		FetchAdmins();
-	}
+    if (part == AdminCache_Groups) 
+    {
+        FetchGroups(currentSequence);
+    } 
+    else if (part == AdminCache_Admins) 
+    {
+        FetchAdmins();
+    }
 }
 
-public Action OnClientPreAdminCheck(int iClient)
+public Action OnClientPreAdminCheck(int client)
 {
-	gIPlayerAuth[iClient] = true;
-	
-	if (!CBIsDBConnected()) {
+    playerAuth[client] = true;
+    
+    if (!CBIsConnected())
+    {
         return Plugin_Continue;
     }
-	/**
-	 * Similarly, if the cache is in the process of being rebuilt, don't delay 
-	 * the user's normal connection flow.  The database will soon auth the user 
-	 * normally.
-	 */
-	if (gIRebuildCachePart[AdminCache_Admins] != 0)
-	{
-		return Plugin_Continue;
-	}
-	
-	/**
-	 * If someone has already assigned an admin ID (bad bad bad), don't 
-	 * bother waiting.
-	 */
-	if (GetUserAdmin(iClient) != INVALID_ADMIN_ID)
-	{
-		return Plugin_Continue;
-	}
-	
-	FetchAdmin(iClient);
-	
-	return Plugin_Handled;
+    /**
+     * Similarly, if the cache is in the process of being rebuilt, don't delay 
+     * the user's normal connection flow.  The database will soon auth the user 
+     * normally.
+     */
+    if (rebuildCachePart[AdminCache_Admins] != 0)
+    {
+        return Plugin_Continue;
+    }
+    
+    /**
+     * If someone has already assigned an admin ID (bad bad bad), don't 
+     * bother waiting.
+     */
+    if (GetUserAdmin(client) != INVALID_ADMIN_ID)
+    {
+        return Plugin_Continue;
+    }
+    
+    FetchAdmin(client);
+    
+    return Plugin_Handled;
 }
 
-public void OnReceiveAdmins(Database db, DBResultSet rs, const char[] sError, any data)
+public void OnReceiveAdmins(Database db, DBResultSet rs, const char[] error, any data)
 {
-	
-	DataPack pk = view_as<DataPack>(data);
-	pk.Reset();
+    
+    DataPack pk = view_as<DataPack>(data);
+    pk.Reset();
 
-	int iClient = pk.ReadCell();
-	
-	/**
-	 * Check if this is the latest result request.
-	 */
-	int iSequence = pk.ReadCell();
-	if (gIPlayerSec[iClient] != iSequence)
-	{
-		#if defined _DEBUG
-			PrintToServer("Out of iSequence");
-		#endif
+    int client = pk.ReadCell();
+    
+    /**
+     * Check if this is the latest result request.
+     */
+    int currentSequence = pk.ReadCell();
+    if (playerSec[client] != currentSequence)
+    {
+        #if defined _DEBUG
+            PrintToServer("Out of currentSequence");
+        #endif
 
-		/* Discard everything, since we're out of iSequence. */
-		delete pk;
-		return;
-	}
-	
-	/**
-	 * If we need to use the results, make sure they succeeded.
-	 */
+        /* Discard everything, since we're out of currentSequence. */
+        delete pk;
+        return;
+    }
+    
+    /**
+     * If we need to use the results, make sure they succeeded.
+     */
 
-	char sQuerySelectAdmins[255];
-	pk.ReadString(sQuerySelectAdmins, sizeof(sQuerySelectAdmins));
+    char selectAdminQuery[255];
+    pk.ReadString(selectAdminQuery, sizeof(selectAdminQuery));
 
-	if (rs == null){
-		LogError("SQL sError receiving user: %s", sError);
-		LogError("Query dump: %s", sQuerySelectAdmins);
-		RunAdminCacheChecks(iClient);
-		NotifyPostAdminCheck(iClient);
-		delete pk;
-		return;	
-	}
-	
+    if (rs == null)
+    {
+        LogError("SQL error receiving user: %s", error);
+        LogError("Query dump: %s", selectAdminQuery);
+        RunAdminCacheChecks(client);
+        NotifyPostAdminCheck(client);
+        delete pk;
+        return;	
+    }
+    
 
-	int iNumAccounts = rs.RowCount;
-	if (iNumAccounts == 0)
-	{
-		#if defined _DEBUG
-			PrintToServer("No admins found");
-		#endif
-		RunAdminCacheChecks(iClient);
-		NotifyPostAdminCheck(iClient);
-		delete pk;
-		return;
-	}
-	
-	char sTitle[128], sTotalFlags[32], sSteamId64[256];
-	int iImmunity, iPostId;
-	AdminId adm;
-	int iPostIdIndex, iImmunityIndex, iTitleIndex, iFlagIndex;
-	/**
-	 * Cache user info -- [0] = db id, [1] = cache id, [2] = groups
-	 */
-	int[][] userLookup = new int[iNumAccounts][3];
-	int iTotalUsers = 0;
+    int accountCount = rs.RowCount;
+    if (accountCount == 0)
+    {
+        #if defined _DEBUG
+            PrintToServer("No admins found");
+        #endif
+        RunAdminCacheChecks(client);
+        NotifyPostAdminCheck(client);
+        delete pk;
+        return;
+    }
+    
+    char title[128], allFlags[32], steamID64[256];
+    int immunity, postID;
+    AdminId adm;
+    int postIDIndex, immunityIndex, titleIndex, flagIndex;
+    /**
+     * Cache user info -- [0] = db id, [1] = cache id, [2] = groups
+     */
+    int[][] userLookup = new int[accountCount][3];
+    int totalUsers = 0;
 
-	pk.ReadString(sSteamId64, sizeof(sSteamId64));
+    pk.ReadString(steamID64, sizeof(steamID64));
 
-	while (rs.FetchRow())
-	{
+    while (rs.FetchRow())
+    {
 
-		rs.FieldNameToNum("post_id",iPostIdIndex);
-		iPostId = rs.FetchInt(iPostIdIndex);
+        rs.FieldNameToNum("post_id", postIDIndex);
+        postID = rs.FetchInt(postIDIndex);
 
-		rs.FieldNameToNum("iImmunity",iImmunityIndex);
-		iImmunity = rs.FetchInt(iImmunityIndex);
+        rs.FieldNameToNum("immunity", immunityIndex);
+        immunity = rs.FetchInt(immunityIndex);
 
-		rs.FieldNameToNum("title",iTitleIndex);
-		rs.FetchString(iTitleIndex,sTitle,sizeof(sTitle));
+        rs.FieldNameToNum("title", titleIndex);
+        rs.FetchString(titleIndex, title, sizeof(title));
 
-		#if defined _DEBUG
-			PrintToServer("Admin found: Title %s, Post ID %d, Steam ID %s, Admin Immunity %d", sTitle, iPostId, sSteamId64, iImmunity);
-		#endif
+        #if defined _DEBUG
+            PrintToServer("Admin found: Title %s, Post ID %d, Steam ID %s, Admin Immunity %d", title, postID, steamID64, immunity);
+        #endif
 
-		/* For dynamic admins we clear anything already in the cache. */
-		if ((adm = FindAdminByIdentity("steam", sSteamId64)) != INVALID_ADMIN_ID)
-		{
-			RemoveAdmin(adm);
-		}
-	
-		adm = CreateAdmin(sTitle);
-		if (!adm.BindIdentity("steam", sSteamId64))
-		{
-			LogError("Could not bind prefetched SQL admin (identity \"%s\")", sSteamId64);
-			continue;
-		}
+        /* For dynamic admins we clear anything already in the cache. */
+        if ((adm = FindAdminByIdentity("steam", steamID64)) != INVALID_ADMIN_ID)
+        {
+            RemoveAdmin(adm);
+        }
+    
+        adm = CreateAdmin(title);
+        if (!adm.BindIdentity("steam", steamID64))
+        {
+            LogError("Could not bind prefetched SQL admin (identity \"%s\")", steamID64);
+            continue;
+        }
 
-		userLookup[iTotalUsers][0] = iPostId;
-		userLookup[iTotalUsers][1] = view_as<int>(adm);
+        userLookup[totalUsers][0] = postID;
+        userLookup[totalUsers][1] = view_as<int>(adm);
 
 
-		#if defined _DEBUG
-			PrintToServer("Found SQL admin (%s, %d)", sSteamId64, userLookup[iTotalUsers][2]);
-		#endif
+        #if defined _DEBUG
+            PrintToServer("Found SQL admin (%s, %d)", steamID64, userLookup[totalUsers][2]);
+        #endif
 
-		iTotalUsers++;
+        totalUsers++;
 
-		adm.ImmunityLevel = iImmunity;
-		
-		sTotalFlags = "zabcdefghijklmnopqrst";
+        adm.ImmunityLevel = immunity;
+        
+        allFlags = "zabcdefghijklmnopqrst";
 
-		/* Apply each flag */
-		int len = strlen(sTotalFlags);
-		AdminFlag flag;
-		rs.FieldNameToNum("flag_z",iFlagIndex);
-		for (int i=0; i<len; i++)
-		{
-			if(rs.FetchInt(iFlagIndex+i) == 1){
-				if (!FindFlagByChar(sTotalFlags[i], flag))
-				{
-					continue;
-				}
-				adm.SetFlag(flag, true);
-			}
-		}
-	}
-	
-	/**
-	 * Try binding the user.
-	 */	
-	
-	RunAdminCacheChecks(iClient);
-	adm = GetUserAdmin(iClient);
-	iPostId = 0;
-	
-	for (int i=0; i<iTotalUsers; i++)
-	{
-		if (userLookup[i][1] == view_as<int>(adm))
-		{
-			iPostId = userLookup[i][0];
-			break;
-		}
-	}
-	
-	#if defined _DEBUG
-		PrintToServer("Binding iClient (%d, %d) resulted in: (%d, %d)", iClient, gISequence, iPostId, adm);
-	#endif
-	
-	/**
-	 * If we can't verify that we assigned a database admin, or the user has no 
-	 * groups, don't bother doing anything.
-	 */
+        /* Apply each flag */
+        int flagCount = strlen(allFlags);
+        AdminFlag flag;
+        rs.FieldNameToNum("flag_z", flagIndex);
+        for (int i=0; i<flagCount; i++)
+        {
+            if(rs.FetchInt(flagIndex+i) == 1){
+                if (!FindFlagByChar(allFlags[i], flag))
+                {
+                    continue;
+                }
+                adm.SetFlag(flag, true);
+            }
+        }
+    }
+    
+    /**
+     * Try binding the user.
+     */	
+    
+    RunAdminCacheChecks(client);
+    adm = GetUserAdmin(client);
+    postID = 0;
+    
+    for (int i=0; i<totalUsers; i++)
+    {
+        if (userLookup[i][1] == view_as<int>(adm))
+        {
+            postID = userLookup[i][0];
+            break;
+        }
+    }
+    
+    #if defined _DEBUG
+        PrintToServer("Binding client (%d, %d) resulted in: (%d, %d)", client, sequence, postID, adm);
+    #endif
+    
+    /**
+     * If we can't verify that we assigned a database admin, or the user has no 
+     * groups, don't bother doing anything.
+     */
 
-	if (!iPostId)
-	{
-		#if defined _DEBUG
-			PrintToServer("iPostId is false");
-		#endif
-		NotifyPostAdminCheck(iClient);
-		delete pk;
-		return;
-	}
-	
+    if (!postID)
+    {
+        #if defined _DEBUG
+            PrintToServer("postID is false");
+        #endif
+        NotifyPostAdminCheck(client);
+        delete pk;
+        return;
+    }
+    
 
-	/**
-	 * The user has groups -- we need to fetch them!
-	 */
-	char sQuerySelectGroups[1024];
-	
-	Format(sQuerySelectGroups, sizeof(sQuerySelectGroups), "SELECT posts.post_title AS title FROM {{cb_groups}} AS groups LEFT JOIN {{posts}} AS posts ON posts.ID = groups.post_id LEFT JOIN {{posts}} AS group_posts ON group_posts.ID = groups.post_id LEFT JOIN {{cb_admins_groups}} AS admins_groups ON admins_groups.foreign_k = groups.post_id WHERE admins_groups.local_k = %d AND group_posts.post_status = 'publish'", iPostId);
+    /**
+     * The user has groups -- we need to fetch them!
+     */
+    char selectGroupquery[1024];
+    
+    Format(selectGroupquery, sizeof(selectGroupquery), "SELECT posts.post_title AS title FROM {{cb_groups}} AS groups LEFT JOIN {{posts}} AS posts ON posts.ID = groups.post_id LEFT JOIN {{posts}} AS group_posts ON group_posts.ID = groups.post_id LEFT JOIN {{cb_admins_groups}} AS admins_groups ON admins_groups.foreign_k = groups.post_id WHERE admins_groups.local_k = %d AND group_posts.post_status = 'publish'", postID);
 
-	pk.Reset();
-	pk.WriteCell(iClient);
-	pk.WriteCell(iSequence);
-	pk.WriteCell(adm);
-	pk.WriteString(sQuerySelectGroups);
+    pk.Reset();
+    pk.WriteCell(client);
+    pk.WriteCell(currentSequence);
+    pk.WriteCell(adm);
+    pk.WriteString(selectGroupquery);
 
-	CBQuery(OnReceiveAdminGroups, sQuerySelectGroups, pk, DBPrio_Normal);
+    CBQuery(OnReceiveAdminGroups, selectGroupquery, pk, DBPrio_Normal);
 }
 
-public void OnReceiveAdminGroups(Database db, DBResultSet rs, const char[] sError, any data)
+public void OnReceiveAdminGroups(Database db, DBResultSet rs, const char[] error, any data)
 {
-	#if defined _DEBUG
-			PrintToServer("OnReceiveAdminGroups");
-	#endif
+    #if defined _DEBUG
+            PrintToServer("OnReceiveAdminGroups");
+    #endif
 
-	DataPack pk = view_as<DataPack>(data);
-	pk.Reset();
-	
-	int iClient = pk.ReadCell();
-	int iSequence = pk.ReadCell();
+    DataPack pk = view_as<DataPack>(data);
+    pk.Reset();
+    
+    int client = pk.ReadCell();
+    int currentSequence = pk.ReadCell();
 
-	/**
-	 * Make sure it's the same iClient.
-	 */
-	if (gIPlayerSec[iClient] != iSequence)
-	{
-		delete pk;
-		return;
-	}
+    /**
+     * Make sure it's the same client.
+     */
+    if (playerSec[client] != currentSequence)
+    {
+        delete pk;
+        return;
+    }
 
-	AdminId adm = view_as<AdminId>(pk.ReadCell());
-	
-	/**
-	 * Someone could have sneakily changed the admin id while we waited.
-	 */
-	if (GetUserAdmin(iClient) != adm)
-	{
-		NotifyPostAdminCheck(iClient);
-		delete pk;
-		return;
-	}
+    AdminId adm = view_as<AdminId>(pk.ReadCell());
+    
+    /**
+     * Someone could have sneakily changed the admin id while we waited.
+     */
+    if (GetUserAdmin(client) != adm)
+    {
+        NotifyPostAdminCheck(client);
+        delete pk;
+        return;
+    }
 
-	/**
-	 * See if we got results.
-	 */
-	if (rs == null)
-	{
-		char sQuery[255];
-		pk.ReadString(sQuery, sizeof(sQuery));
-		LogError("SQL sError receiving user: %s", sError);
-		LogError("Query dump: %s", sQuery);
-		NotifyPostAdminCheck(iClient);
-		delete pk;
-		return;
-	}
-	
-	char sTitle[80];
-	GroupId grp;
-	
-	while (rs.FetchRow())
-	{
+    /**
+     * See if we got results.
+     */
+    if (rs == null)
+    {
+        char query[255];
+        pk.ReadString(query, sizeof(query));
+        LogError("SQL error receiving user: %s", error);
+        LogError("Query dump: %s", query);
+        NotifyPostAdminCheck(client);
+        delete pk;
+        return;
+    }
+    
+    char title[80];
+    GroupId grp;
+    
+    while (rs.FetchRow())
+    {
 
-		int iTitleIndex;
+        int titleIndex;
 
-		rs.FieldNameToNum("title",iTitleIndex);
-		rs.FetchString(iTitleIndex,sTitle,sizeof(sTitle));
+        rs.FieldNameToNum("title", titleIndex);
+        rs.FetchString(titleIndex, title, sizeof(title));
 
-		if ((grp = FindAdmGroup(sTitle)) == INVALID_GROUP_ID)
-		{
-			continue;
-		}
-		
-		#if defined _DEBUG
-				PrintToServer("Binding user group (%d, %d, %d, %s, %d)", iClient, iSequence, adm, sTitle, grp);
-		#endif
-		
-		adm.InheritGroup(grp);
-	}
-	
-	NotifyPostAdminCheck(iClient);
-	delete pk;
+        if ((grp = FindAdmGroup(title)) == INVALID_GROUP_ID)
+        {
+            continue;
+        }
+        
+        #if defined _DEBUG
+                PrintToServer("Binding user group (%d, %d, %d, %s, %d)", client, currentSequence, adm, title, grp);
+        #endif
+        
+        adm.InheritGroup(grp);
+    }
+    
+    NotifyPostAdminCheck(client);
+    delete pk;
 }
 
-public void OnReceiveGroups(Database db, DBResultSet rs, const char[] sError, any data)
+public void OnReceiveGroups(Database db, DBResultSet rs, const char[] error, any data)
 {
-	DataPack pk = view_as<DataPack>(data);
-	pk.Reset();
-	/**
-	 * Check if this is the latest result request.
-	 */
-	int iSequence = pk.ReadCell();
-	if (gIRebuildCachePart[AdminCache_Groups] != iSequence)
-	{
-		/* Discard everything, since we're out of iSequence. */
-		delete pk;
-		return;
-	}
-	
-	/**
-	 * If we need to use the results, make sure they succeeded.
-	 */
-	if (rs == null)
-	{
-		char sQuery[255];
-		pk.ReadString(sQuery, sizeof(sQuery));
-		LogError("SQL sError receiving groups: %s", sError);
-		LogError("Query dump: %s", sQuery);
-		delete pk;
-		return;
-	}
-	
-	/**
-	 * Now start fetching groups.
-	 */
-	char sTitle[128], sTotalFlags[32];
-	int iImmunity;
-	while (rs.FetchRow())
-	{
-		int iImmunityIndex, iTitleIndex, iFlagIndex;
+    DataPack pk = view_as<DataPack>(data);
+    pk.Reset();
+    /**
+     * Check if this is the latest result request.
+     */
+    int currentSequence = pk.ReadCell();
+    if (rebuildCachePart[AdminCache_Groups] != currentSequence)
+    {
+        /* Discard everything, since we're out of currentSequence. */
+        delete pk;
+        return;
+    }
+    
+    /**
+     * If we need to use the results, make sure they succeeded.
+     */
+    if (rs == null)
+    {
+        char query[255];
+        pk.ReadString(query, sizeof(query));
+        LogError("SQL error receiving groups: %s", error);
+        LogError("Query dump: %s", query);
+        delete pk;
+        return;
+    }
+    
+    /**
+     * Now start fetching groups.
+     */
+    char title[128], allFlags[32];
+    int immunity;
+    while (rs.FetchRow())
+    {
+        int immunityIndex, titleIndex, flagIndex;
 
 
-		rs.FieldNameToNum("iImmunity",iImmunityIndex);
-		iImmunity = rs.FetchInt(iImmunityIndex);
+        rs.FieldNameToNum("immunity",immunityIndex);
+        immunity = rs.FetchInt(immunityIndex);
 
-		rs.FieldNameToNum("title",iTitleIndex);
-		rs.FetchString(iTitleIndex,sTitle,sizeof(sTitle));
+        rs.FieldNameToNum("title",titleIndex);
+        rs.FetchString(titleIndex,title,sizeof(title));
 
-		#if defined _DEBUG
-				PrintToServer("Adding group (%s, %d)", sTitle, iImmunity);
-		#endif
-		
-		/* Find or create the group */
-		GroupId grp;
-		if ((grp = FindAdmGroup(sTitle)) == INVALID_GROUP_ID)
-		{
-			grp = CreateAdmGroup(sTitle);
-		}
+        #if defined _DEBUG
+            PrintToServer("Adding group (%s, %d)", title, immunity);
+        #endif
+        
+        /* Find or create the group */
+        GroupId grp;
+        if ((grp = FindAdmGroup(title)) == INVALID_GROUP_ID)
+        {
+            grp = CreateAdmGroup(title);
+        }
 
-		sTotalFlags = "zabcdefghijklmnopqrst";
+        allFlags = "zabcdefghijklmnopqrst";
 
-		/* Apply each flag */
-		int len = strlen(sTotalFlags);
-		AdminFlag flag;
-		rs.FieldNameToNum("flag_z",iFlagIndex);
-		for (int i=0; i<len; i++)
-		{
-			if(rs.FetchInt(iFlagIndex+i) == 1){
-				#if defined _DEBUG
-					PrintToServer("Flag %c enabled", sTotalFlags[i]);
-				#endif
-				if (!FindFlagByChar(sTotalFlags[i], flag))
-				{
-					continue;
-				}
-				grp.SetFlag(flag, true);
-			}
-		}
-		grp.ImmunityLevel = iImmunity;
-	}
+        /* Apply each flag */
+        int flagCount = strlen(allFlags);
+        AdminFlag flag;
+        rs.FieldNameToNum("flag_z", flagIndex);
+        for (int i=0; i<flagCount; i++)
+        {
+            if(rs.FetchInt(flagIndex+i) == 1)
+            {
+                #if defined _DEBUG
+                    PrintToServer("Flag %c enabled", allFlags[i]);
+                #endif
+                if (!FindFlagByChar(allFlags[i], flag))
+                {
+                    continue;
+                }
+                grp.SetFlag(flag, true);
+            }
+        }
+        grp.ImmunityLevel = immunity;
+    }
 }
 
 public void CB_OnConnect(Database db)
 {
-    int iSequence;
-    if ((iSequence = gIRebuildCachePart[AdminCache_Admins])) {
+    int currentSequence;
+    if ((currentSequence = rebuildCachePart[AdminCache_Admins]))
+    {
         FetchAdmins();
     }
-    if ((iSequence = gIRebuildCachePart[AdminCache_Groups])) {
-        FetchGroups(iSequence);
+    if ((currentSequence = rebuildCachePart[AdminCache_Groups]))
+    {
+        FetchGroups(currentSequence);
     }
 }
 
-void FetchAdmin( int iClient)
+void FetchAdmin( int client)
 {
 
-	if(!CBClientCheck(iClient))
-		return;
+    if(!CBCheckClient(client))
+    {
+        return;
+    }
 
-	char sSteamId64[32], sEscapedSteamId64[64];
+    char steamID64[32], escapedSteamID64[64];
 
-	sSteamId64[0] = '\0';
-	if (GetClientAuthId(iClient, AuthId_SteamID64, sSteamId64, sizeof(sSteamId64)))
-	{
-		if (StrEqual(sSteamId64, "STEAM_ID_LAN"))
-		{
-			sSteamId64[0] = '\0';
-		}
-	}
+    steamID64[0] = '\0';
+    if (GetClientAuthId(client, AuthId_SteamID64, steamID64, sizeof(steamID64)))
+    {
+        if (StrEqual(steamID64, "STEAM_ID_LAN"))
+        {
+            steamID64[0] = '\0';
+        }
+    }
 
-	CBEscape(sSteamId64,sEscapedSteamId64,sizeof(sEscapedSteamId64));
+    CBEscapeQuery(steamID64, escapedSteamID64, sizeof(escapedSteamID64));
 
-	/**
-	 * Construct the query using the information the user gave us.
-	 */
-	char sQuery[1024];
-	Format(sQuery, sizeof(sQuery), "SELECT admins.*, posts.post_title AS title FROM {{cb_admins}} AS admins LEFT JOIN {{posts}} AS posts ON posts.ID = admins.post_id WHERE find_in_set('%s',admins.steam_ids_64) AND posts.post_status = 'publish'",sEscapedSteamId64);
-	
-	/**
-	 * Send the actual query.
-	 */	
-	gIPlayerSec[iClient] = ++gISequence;
-	
-	DataPack pk = new DataPack();
-	pk.WriteCell(iClient);
-	pk.WriteCell(gIPlayerSec[iClient]);
-	pk.WriteString(sQuery);
-	pk.WriteString(sEscapedSteamId64);
+    /**
+     * Construct the query using the information the user gave us.
+     */
+    char query[1024];
+    Format(query, sizeof(query), "SELECT admins.*, posts.post_title AS title FROM {{cb_admins}} AS admins LEFT JOIN {{posts}} AS posts ON posts.ID = admins.post_id WHERE find_in_set('%s',admins.steam_ids_64) AND posts.post_status = 'publish'",escapedSteamID64);
+    
+    /**
+     * Send the actual query.
+     */	
+    playerSec[client] = ++sequence;
+    
+    DataPack pk = new DataPack();
+    pk.WriteCell(client);
+    pk.WriteCell(playerSec[client]);
+    pk.WriteString(query);
+    pk.WriteString(escapedSteamID64);
 
-	CBQuery(OnReceiveAdmins, sQuery, pk, DBPrio_Normal);
+    CBQuery(OnReceiveAdmins, query, pk, DBPrio_Normal);
 }
 
 void FetchAdmins()
 {
-	for (int i=1; i<=MaxClients; i++)
-	{
-		if (gIPlayerAuth[i] && GetUserAdmin(i) == INVALID_ADMIN_ID)
-		{
-			FetchAdmin(i);
-		}
-	}
-	
-	/**
-	 * This round of updates is done.  Go in peace.
-	 */
-	gIRebuildCachePart[AdminCache_Admins] = 0;
+    for (int i=1; i<=MaxClients; i++)
+    {
+        if (playerAuth[i] && GetUserAdmin(i) == INVALID_ADMIN_ID)
+        {
+            FetchAdmin(i);
+        }
+    }
+    
+    /**
+     * This round of updates is done.  Go in peace.
+     */
+    rebuildCachePart[AdminCache_Admins] = 0;
 }
 
-void FetchGroups(int iSequence)
+void FetchGroups(int currentSequence)
 {
-	char sQuery[255];
-	
-	Format(sQuery, sizeof(sQuery), "SELECT groups.*, posts.post_title AS title FROM {{cb_groups}} AS groups LEFT JOIN {{posts}} AS posts ON posts.ID = groups.post_id WHERE posts.post_status = 'publish'");
+    char query[255];
+    
+    Format(query, sizeof(query), "SELECT groups.*, posts.post_title AS title FROM {{cb_groups}} AS groups LEFT JOIN {{posts}} AS posts ON posts.ID = groups.post_id WHERE posts.post_status = 'publish'");
 
-	DataPack pk = new DataPack();
-	pk.WriteCell(iSequence);
-	pk.WriteString(sQuery);
-	
-	CBQuery(OnReceiveGroups, sQuery, pk, DBPrio_Normal);
+    DataPack pk = new DataPack();
+    pk.WriteCell(currentSequence);
+    pk.WriteString(query);
+    
+    CBQuery(OnReceiveGroups, query, pk, DBPrio_Normal);
 }
 
