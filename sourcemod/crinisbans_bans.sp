@@ -24,11 +24,9 @@ public Plugin myinfo =
 
 public void OnPluginStart()
 {
-
     if (LibraryExists("crinisbans")) {
         CBInit();
     }
-
 }
 
 public void OnConfigsExecuted()
@@ -58,7 +56,7 @@ public void OnClientPostAdminCheck(int client)
     CBEscapeQuery(steamID64, escapedSteamID64, sizeof(escapedSteamID64));
     
     char query[1024];
-    Format(query, sizeof(query), "SELECT reason_posts.post_title AS reason_title FROM {{cb_bans}} AS bans LEFT JOIN {{posts}} AS posts ON bans.post_id = posts.ID LEFT JOIN {{cb_reasons}} AS reasons ON bans.reason_post_id = reasons.post_id LEFT JOIN {{posts}} AS reason_posts ON reasons.post_id = reason_posts.ID WHERE bans.steam_id_64 = '%s' AND posts.post_status = 'publish' AND DATE_ADD(posts.post_date_gmt,INTERVAL reasons.duration SECOND) > NOW()",escapedSteamID64);
+    Format(query, sizeof(query), "SELECT reason_posts.post_title AS reason_title FROM {{cb_bans}} AS bans LEFT JOIN {{posts}} AS posts ON bans.post_id = posts.ID LEFT JOIN {{cb_reasons}} AS reasons ON bans.reason_post_id = reasons.post_id LEFT JOIN {{posts}} AS reason_posts ON reasons.post_id = reason_posts.ID WHERE bans.steam_id_64 = '%s' AND posts.post_status = 'publish' AND DATE_ADD(posts.post_date_gmt,INTERVAL reasons.duration SECOND) > NOW()", escapedSteamID64);
 
     #if defined _DEBUG
         PrintToServer("Checking Ban for client %d", client);
@@ -70,18 +68,18 @@ public void OnClientPostAdminCheck(int client)
 public void CheckBan(Database db, DBResultSet results, const char[] error, any client)
 {
     /*
-    We only need one Ban reason here. As we cant show multiple anyway.
+    * We only need one Ban reason here. As we cant show multiple anyway.
     */
     if (!results.FetchRow()) 
     {
         #if defined _DEBUG
-            PrintToServer("No Ban found in DB", client);
+            PrintToServer("No Ban found for client %d", client);
         #endif
         return;
     }
 
     #if defined _DEBUG
-        PrintToServer("Ban found in DB for client: %d", client);
+        PrintToServer("Ban found for client %d", client);
     #endif
 
     char reasonTitle[1024];
@@ -108,24 +106,23 @@ public Action Timer_KickBannedPlayer(Handle timer, DataPack bannedPlayerPack)
 
 bool KickBannedPlayer(int client, const char[] reasonTitle)
 {
-    char auth[20], ban_msg[1024];
+    char auth[20], ban_message[1024];
+    Format(ban_message, sizeof(ban_message), "You are banned from this server! Reason: %s", reasonTitle);
 
     GetClientAuthId(client, AuthId_Steam2, auth, sizeof(auth));
-    BanIdentity(auth, 1, BANFLAG_AUTHID, "ban_msg", "sm_ban", client);
+    BanIdentity(auth, 1, BANFLAG_AUTHID, ban_message, "sm_ban", client);
 
-    Format(ban_msg, sizeof(ban_msg), "You are banned from this server! Reason: %s", reasonTitle);
-    KickPlayer(client, ban_msg);
+    KickPlayer(client, ban_message);
 }
 
-bool KickPlayer(int client, char[] msg)
+bool KickPlayer(int client, char[] kickMessage)
 {
-    // check if client is still connected
     if(!CBCheckClient(client))
     {
         return;
     }
 
-    KickClient(client,msg);
+    KickClient(client, "%s", kickMessage);
     #if defined _DEBUG
         PrintToServer("Kicked player: %d", client);
     #endif

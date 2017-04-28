@@ -71,4 +71,4 @@ native void CBInit();
 
 native bool CBIsConnected();
 
-native bool CBCheckClient(int iClient);
+native bool CBCheckClient(int client);

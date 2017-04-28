@@ -33,12 +33,12 @@ Handle onConnectForward;
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int maxErrors)
 {
-    CreateNative("CBConnect",		Native_Connect);
-    CreateNative("CBQuery", 		Native_Query);
-    CreateNative("CBEscapeQuery",		Native_EscapeQuery);
+    CreateNative("CBConnect", Native_Connect);
+    CreateNative("CBQuery", Native_Query);
+    CreateNative("CBEscapeQuery", Native_EscapeQuery);
     CreateNative("CBIsConnected", Native_IsConnected);
-    CreateNative("CBInit", 			Native_Init);
-    CreateNative("CBCheckClient", 	Native_CheckClient);
+    CreateNative("CBInit", Native_Init);
+    CreateNative("CBCheckClient", Native_CheckClient);
     
     RegPluginLibrary("crinisbans");
 
@@ -63,12 +63,12 @@ public void OnMapEnd()
     delete crinisbansDatabase;
 }
 
-public int Native_Init(Handle plugin, int numParams){
+public int Native_Init(Handle plugin, int paramCount){
     
 
 }
 
-public int Native_CheckClient(Handle plugin, int numParams)
+public int Native_CheckClient(Handle plugin, int paramCount)
 {
     int client = GetNativeCell(1);
     if(IsClientInGame(client) && IsClientConnected(client) && !IsFakeClient(client))
@@ -81,7 +81,7 @@ public int Native_CheckClient(Handle plugin, int numParams)
     }
 }
 
-public int Native_Connect(Handle plugin, int numParams)
+public int Native_Connect(Handle plugin, int paramCount)
 {
     if (connectLock) 
     {
@@ -91,7 +91,7 @@ public int Native_Connect(Handle plugin, int numParams)
     connectLock = ++sequence;
 
     #if defined _DEBUG
-        PrintToServer("Trying to connect to crinisbansDatabase: connectLock=%d",connectLock);
+        PrintToServer("Trying to connect to database: connectLock=%d",connectLock);
     #endif
     Database.Connect(OnConnect, SQL_CheckConfig("crinisbans") ? "crinisbans" : "default", connectLock);
 
@@ -121,7 +121,7 @@ public void OnConnect(Database db, const char[] error, any data)
 
     if(crinisbansDatabase == null)
     {
-        LogError("Failed to connect to crinisbansDatabase: %s", error);
+        LogError("Failed to connect to database: %s", error);
         return;
     }
     crinisbansDatabase.SetCharset("utf8");
@@ -130,12 +130,12 @@ public void OnConnect(Database db, const char[] error, any data)
     Call_Finish();
 }
 
-public int Native_IsConnected(Handle plugin, int numParams)
+public int Native_IsConnected(Handle plugin, int paramCount)
 {
     return !!crinisbansDatabase;
 }
 
-public int Native_EscapeQuery(Handle plugin, int numParams)
+public int Native_EscapeQuery(Handle plugin, int paramCount)
 {
 
     int queryLength = GetNativeCell(3);
@@ -156,12 +156,12 @@ public int Native_EscapeQuery(Handle plugin, int numParams)
     return success;
 }
 
-public int Native_Query(Handle plugin, int numParams)
+public int Native_Query(Handle plugin, int paramCount)
 {
     if (!CBIsConnected()) 
     {
         #if defined _DEBUG
-            PrintToServer("DB is not connected");
+            PrintToServer("Not connected to database");
         #endif
         return;
     }
@@ -173,12 +173,12 @@ public int Native_Query(Handle plugin, int numParams)
     any data = GetNativeCell(3);
     DBPriority priority = GetNativeCell(4);
 
-    DataPack hPack = new DataPack();
-    hPack.WriteCell(plugin);
-    hPack.WriteFunction(callback);
-    hPack.WriteCell(data);
+    DataPack pack = new DataPack();
+    pack.WriteCell(plugin);
+    pack.WriteFunction(callback);
+    pack.WriteCell(data);
 
-    SendQuery(QueryCallback, query, hPack, priority);
+    SendQuery(QueryCallback, query, pack, priority);
 }
 
 void QueryCallback(Database db, DBResultSet results, const char[] error, DataPack pack)

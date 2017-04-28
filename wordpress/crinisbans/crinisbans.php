@@ -5,7 +5,7 @@ defined( 'ABSPATH' ) || die( 'No script kiddies please!' );
 * Plugin Name: Crinisbans
 * Plugin URI: https://crinis.org
 * Description: Admin, Ban and Server Manager for Counterstrike: Global Offensive servers
-* Version: v0.2.0
+* Version: v0.2.1
 * Author: crinis
 * Author URI: crinis.org
 */
@@ -138,12 +138,12 @@ class Crinisbans {
 		$cron->enable_cronjobs();
 
 		$old_version = ltrim( $this->settings->get( 'version' ), 'v' );
-		$new_version = ltrim( 'v0.2.0', 'v' );
+		$new_version = ltrim( 'v0.2.1', 'v' );
 		if ( version_compare( $old_version, $new_version, '<=' ) ) {
-			$this->settings->set( 'version','v0.2.0' );
+			$this->settings->set( 'version','v0.2.1' );
 			return;
 		}
-		$this->settings->set( 'version','v0.2.0' );
+		$this->settings->set( 'version','v0.2.1' );
 		/*
 		Setup all tables.
 		*/

@@ -40,7 +40,6 @@ public void OnConfigsExecuted()
 {
     if (DisablePlugin("admin-sql-prefetch") | DisablePlugin("admin-sql-threaded") | DisablePlugin("sql-admin-manager")) 
     {
-        // Reload admins
         DumpAdminCache(AdminCache_Groups, true);
         DumpAdminCache(AdminCache_Admins, true);
     }
@@ -132,7 +131,7 @@ public void OnReceiveAdmins(Database db, DBResultSet rs, const char[] error, any
     if (playerSec[client] != currentSequence)
     {
         #if defined _DEBUG
-            PrintToServer("Out of currentSequence");
+            PrintToServer("Out of sequence");
         #endif
 
         /* Discard everything, since we're out of currentSequence. */
@@ -270,7 +269,7 @@ public void OnReceiveAdmins(Database db, DBResultSet rs, const char[] error, any
     if (!postID)
     {
         #if defined _DEBUG
-            PrintToServer("postID is false");
+            PrintToServer("Post ID is false");
         #endif
         NotifyPostAdminCheck(client);
         delete pk;
@@ -296,10 +295,6 @@ public void OnReceiveAdmins(Database db, DBResultSet rs, const char[] error, any
 
 public void OnReceiveAdminGroups(Database db, DBResultSet rs, const char[] error, any data)
 {
-    #if defined _DEBUG
-            PrintToServer("OnReceiveAdminGroups");
-    #endif
-
     DataPack pk = view_as<DataPack>(data);
     pk.Reset();
     
@@ -358,7 +353,7 @@ public void OnReceiveAdminGroups(Database db, DBResultSet rs, const char[] error
         }
         
         #if defined _DEBUG
-                PrintToServer("Binding user group (%d, %d, %d, %s, %d)", client, currentSequence, adm, title, grp);
+            PrintToServer("Binding user group (%d, %d, %d, %s, %d)", client, currentSequence, adm, title, grp);
         #endif
         
         adm.InheritGroup(grp);
@@ -460,9 +455,8 @@ public void CB_OnConnect(Database db)
     }
 }
 
-void FetchAdmin( int client)
+void FetchAdmin(int client)
 {
-
     if(!CBCheckClient(client))
     {
         return;
@@ -485,7 +479,7 @@ void FetchAdmin( int client)
      * Construct the query using the information the user gave us.
      */
     char query[1024];
-    Format(query, sizeof(query), "SELECT admins.*, posts.post_title AS title FROM {{cb_admins}} AS admins LEFT JOIN {{posts}} AS posts ON posts.ID = admins.post_id WHERE find_in_set('%s',admins.steam_ids_64) AND posts.post_status = 'publish'",escapedSteamID64);
+    Format(query, sizeof(query), "SELECT admins.*, posts.post_title AS title FROM {{cb_admins}} AS admins LEFT JOIN {{posts}} AS posts ON posts.ID = admins.post_id WHERE find_in_set('%s',admins.steam_ids_64) AND posts.post_status = 'publish'", escapedSteamID64);
     
     /**
      * Send the actual query.
