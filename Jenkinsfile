@@ -40,7 +40,7 @@ node {
                 sh 'mkdir -p build/sourcemod/addons/sourcemod/plugins/ build/sourcemod/addons/sourcemod/scripting/ build/sourcemod/cfg/sourcemod/'
                 sh 'mv /home/builder/sourcemod/addons/sourcemod/scripting/compiled/* build/sourcemod/addons/sourcemod/plugins/'
                 sh 'cp sourcemod/*.sp build/sourcemod/addons/sourcemod/scripting/'
-                sh 'cp -R include/ build/sourcemod/addons/sourcemod/scripting/'
+                sh 'cp -R sourcemod/include/ build/sourcemod/addons/sourcemod/scripting/'
                 sh 'cp sourcemod/cfg/crinisbans.cfg build/sourcemod/cfg/sourcemod/'
                 sh 'chown --reference sourcemod/ -R build/sourcemod/'
             }
