@@ -59,10 +59,10 @@ class RCON_Service {
 		return $server_players;
 	}
 
-	public function kick_player( $steam_id_64 ) {
+	public function kick_player( $steam_id_64, $reason_text ) {
 		foreach ( $this->get_players() as $player ) {
 			if ( $player->get_steam_id_64() === $steam_id_64 ) {
-				$command = sprintf( 'sm_kick "#%s" %s ', $player->get_id(), $reason );
+				$command = sprintf( 'sm_kick #%s %s',$player->get_id(),$reason_text );
 				$response = $this->exec_rcon( $command );
 				return (strpos( $response, 'kicked' ) !== false) ? true : false;
 			}
