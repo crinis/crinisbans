@@ -92,7 +92,7 @@ class Admin_CPT implements I_CPT {
 
 		$admin->set_user_id( $_POST['cb-user-id'] );
 		$admin->set_group_post_ids( $_POST['cb-groups'] );
-
+		
 		$this->admin_repository->update( $admin );
 	}
 

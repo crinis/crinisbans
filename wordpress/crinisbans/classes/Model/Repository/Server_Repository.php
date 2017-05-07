@@ -47,7 +47,7 @@ class Server_Repository extends Repository {
 
 	public function update( $new ) {
 		parent::update( $new );
-		$old = $this->get( $new->get_post_id() );
+		$old = $this->get( $new->get_post_id(), false );
 		if ( ! $this->server_group_repository->post_ids_exist( $new->get_server_group_post_ids() ) ) {
 			return false;
 		}

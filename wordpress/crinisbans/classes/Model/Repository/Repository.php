@@ -29,7 +29,7 @@ abstract class Repository {
 	}
 
 	public function update( $new ) {
-		$old = $this->get( $new->get_post_id() );
+		$old = $this->get( $new->get_post_id(), false );
 
 		do_action( 'cb_post_before_update', $new, $old );
 
