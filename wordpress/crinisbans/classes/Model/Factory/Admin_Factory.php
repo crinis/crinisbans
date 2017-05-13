@@ -1,7 +1,7 @@
 <?php
 namespace crinis\cb\Model\Factory;
 
-use \crinis\cb\Model\Domain\Admin;
+use \crinis\cb\Model\Admin;
 
 class Admin_Factory extends Factory {
 

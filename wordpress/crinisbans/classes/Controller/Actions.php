@@ -1,9 +1,9 @@
 <?php
 
 namespace crinis\cb\Controller;
-use \crinis\cb\Model\Domain\Ban;
-use \crinis\cb\Model\Domain\Admin;
-use \crinis\cb\Model\Domain\Group;
+use \crinis\cb\Model\Ban;
+use \crinis\cb\Model\Admin;
+use \crinis\cb\Model\Group;
 use \crinis\cb\Helper\Util;
 use \crinis\cb\Model\Repository\Repository;
 use \crinis\cb\Service\RCON_Service;
@@ -41,7 +41,7 @@ class Actions {
 		}
 	}
 
-	public function post_before_update( $object ) {
+	public function before_post_update( $object ) {
 		if ( $object instanceof Admin ) {
 			$object->set_name( $object->get_steam_id_64() );
 			$user = get_userdata( $object->get_user_id() );
@@ -88,6 +88,22 @@ class Actions {
 		}
 		return true;
 	}
+
+	public function enqueue_admin_scripts() {
+		wp_enqueue_script( 'cb-backend', CB_URL . '/dist/backend.bundle.js',[ 'jquery-ui-widget' ] );
+	}
+
+	public function enqueue_styles() {
+		wp_enqueue_style( 'cb-vue', CB_URL . '/dist/styles.css' );
+	}
+
+	public function enqueue_frontend_scripts( $cb_env ) {
+		wp_enqueue_script( 'cb-vue', CB_URL . '/dist/app.bundle.js', array() );
+		wp_localize_script( 'cb-vue', 'cbEnv', $cb_env );
+	}
+	/*
+	Main Javascript is included inside of specific controllers
+	*/
 
 }
 

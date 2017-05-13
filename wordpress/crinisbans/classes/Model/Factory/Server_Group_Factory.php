@@ -1,7 +1,7 @@
 <?php
 namespace crinis\cb\Model\Factory;
 
-use \crinis\cb\Model\Domain\Server_Group;
+use \crinis\cb\Model\Server_Group;
 
 class Server_Group_Factory extends Factory {
 

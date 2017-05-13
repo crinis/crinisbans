@@ -4,7 +4,7 @@ use \crinis\cb\Model\Repository\Repository;
 use \crinis\cb\Model\Factory\I_Factory;
 use \crinis\cb\Helper\Util;
 use \crinis\cb\View\Viewhelper\I_Viewhelper;
-use \crinis\cb\Settings;
+use \crinis\cb\Model\Options;
 
 class Admin_CPT implements I_CPT {
 
@@ -16,14 +16,14 @@ class Admin_CPT implements I_CPT {
 	private $group_repository;
 	private $player_factory;
 	private $viewhelper;
-	private $settings;
+	private $options;
 	private $util;
 
 	public function __construct(
 		Repository $admin_repository,
 		Repository $group_repository,
 		I_Viewhelper $viewhelper,
-		Settings $settings,
+		options $options,
 		Util $util,
 		I_Factory $player_factory
 	) {
@@ -31,7 +31,7 @@ class Admin_CPT implements I_CPT {
 		$this->group_repository = $group_repository;
 		$this->viewhelper = $viewhelper;
 		$this->util = $util;
-		$this->settings = $settings;
+		$this->options = $options;
 		$this->player_factory = $player_factory;
 	}
 
@@ -85,7 +85,7 @@ class Admin_CPT implements I_CPT {
 
 		$admin->set_steam_ids_64( $steam_ids_64 );
 
-		if ( ! $this->settings->get( 'hide_admin_perms' ) ) {
+		if ( ! $this->options->get( 'hide_admin_perms' ) ) {
 			$admin->set_flags( $_POST['cb-flags'] );
 			$admin->set_immunity( $_POST['cb-immunity'] );
 		}

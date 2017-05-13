@@ -33,8 +33,9 @@ class Server_Group_Post_Shortcode extends Post_Shortcode {
 		$cb_env['text']['serverConnect'] = __( 'Connect to gameserver','crinisbans' );
 		$cb_env['text']['gotvConnect'] = __( 'Connect to GOTV','crinisbans' );
 		$cb_env['text']['viewPlayers'] = __( 'View current players','crinisbans' );
-		wp_enqueue_script( 'cb-vue', CB_URL . '/dist/app.bundle.js', array() );
-		wp_localize_script( 'cb-vue', 'cbEnv', $cb_env );
+
+		do_action( 'cb_enqueue_frontend_scripts', $cb_env );
+		
 		ob_start();
 		require( CB_PATH . 'classes/View/Templates/Server_Group_Post.php' );
 		return ob_get_clean();

@@ -1,7 +1,7 @@
 <?php
 namespace crinis\cb\Model\Factory;
 
-use \crinis\cb\Model\Domain\Reason;
+use \crinis\cb\Model\Reason;
 
 class Reason_Factory extends Factory {
 

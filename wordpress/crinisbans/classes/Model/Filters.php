@@ -2,8 +2,8 @@
 
 namespace crinis\cb\Model;
 
-use \crinis\cb\Model\Domain\Server_Group;
-use \crinis\cb\Model\Domain\Server;
+use \crinis\cb\Model\Server_Group;
+use \crinis\cb\Model\Server;
 use \crinis\cb\Model\Repository\Repository;
 
 class Filters {

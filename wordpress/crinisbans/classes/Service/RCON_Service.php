@@ -1,6 +1,6 @@
 <?php
 namespace crinis\cb\Service;
-use \crinis\cb\Model\Domain\Server;
+use \crinis\cb\Model\Server;
 use \crinis\cb\Model\Factory\I_Factory;
 
 class RCON_Service {

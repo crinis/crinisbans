@@ -97,4 +97,6 @@ return [
 		->constructorParameter( 'factory', DI\get( 'crinis\cb\Model\Factory\Server_Factory' ) )
 		->method( 'set_servers_server_groups_db', DI\get( 'crinis\cb\Model\DB\Servers_Server_Groups_DB' ) )
 		->method( 'set_server_group_repository', DI\get( 'crinis\cb\Model\Repository\Server_Group_Repository' ) ),
+		'crinis\cb\Controller\Settings_Page' => DI\object()
+		->constructorParameter( 'options', DI\get( 'crinis\cb\Model\Options' ) )
 ];

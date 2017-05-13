@@ -1,7 +1,7 @@
 <?php
 namespace crinis\cb\Model\Factory;
 
-use \crinis\cb\Model\Domain\Player\Steam_Player;
+use \crinis\cb\Model\Player\Steam_Player;
 
 class Steam_Player_Factory extends Factory {
 

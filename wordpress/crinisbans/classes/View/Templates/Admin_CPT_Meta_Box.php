@@ -18,7 +18,7 @@
 			</select>
 		</div>
 		<?php
-		if ( $this->settings->get( 'show_admin_perms' ) ) {?>
+		if ( $this->options->get( 'show_admin_perms' ) ) {?>
 			<div class="column">
 				<label for="cb-immunity"><?php esc_html_e( 'Immunity', 'crinisbans' )?></label>
 				<input type="text" id="cb-immunity" name="cb-immunity" value="<?php echo esc_attr( $attrs['admin']->get_immunity() ) ?>" />

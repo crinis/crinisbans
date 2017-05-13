@@ -1,5 +1,5 @@
 <?php
-namespace crinis\cb\Model\Domain\Player;
+namespace crinis\cb\Model\Player;
 
 class Server_Player extends Player implements \JsonSerializable {
 

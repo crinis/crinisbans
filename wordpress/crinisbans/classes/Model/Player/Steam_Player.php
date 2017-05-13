@@ -1,5 +1,5 @@
 <?php
-namespace crinis\cb\Model\Domain\Player;
+namespace crinis\cb\Model\Player;
 
 class Steam_Player extends Player {
 

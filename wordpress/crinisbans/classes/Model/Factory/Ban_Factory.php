@@ -1,7 +1,7 @@
 <?php
 namespace crinis\cb\Model\Factory;
 
-use \crinis\cb\Model\Domain\Ban;
+use \crinis\cb\Model\Ban;
 
 class Ban_Factory extends Factory {
 

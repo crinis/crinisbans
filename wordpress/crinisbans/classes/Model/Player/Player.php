@@ -1,5 +1,5 @@
 <?php
-namespace crinis\cb\Model\Domain\Player;
+namespace crinis\cb\Model\Player;
 use \crinis\cb\Helper\Util;
 use \crinis\cb\Model\Validator;
 

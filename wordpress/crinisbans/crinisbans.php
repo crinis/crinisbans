@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || die( 'No script kiddies please!' );
 
 define( 'CB_PATH', plugin_dir_path( __FILE__ ) );
 define( 'CB_URL', WP_PLUGIN_URL . '/' . dirname( plugin_basename( __FILE__ ) ) );
+define( 'CB_VERSION', '0.2.2' );
 require 'vendor/autoload.php';
 
 
@@ -19,34 +20,34 @@ class Crinisbans {
 
 	private $container;
 	private $loader;
-	private $settings;
+	private $options;
 
 	public function __construct() {
+
 		$builder = new DI\ContainerBuilder();
 		$builder->addDefinitions( __DIR__ . '/config.php' );
 		$this->container = $builder->build();
 		$this->loader = $this->container->get( 'crinis\cb\Controller\Loader' );
-		$this->settings = $this->container->get( 'crinis\cb\Settings' );
+		$this->options = $this->container->get( 'crinis\cb\Model\Options' );
 		register_activation_hook( __FILE__, array( $this, 'activate' ) );
 		register_deactivation_hook( __FILE__, array( $this, 'deactivate' ) );
 		register_uninstall_hook( __FILE__, array( self, 'uninstall' ) );
 		$this->init();
+
 	}
 
 	public function init() {
-		$admin_cpt = $this->container->get( 'crinis\cb\Controller\CPT\Admin_CPT' );
-		$group_cpt = $this->container->get( 'crinis\cb\Controller\CPT\Group_CPT' );
-		$server_cpt = $this->container->get( 'crinis\cb\Controller\CPT\Server_CPT' );
-		$ban_cpt = $this->container->get( 'crinis\cb\Controller\CPT\Ban_CPT' );
-		$reason_cpt = $this->container->get( 'crinis\cb\Controller\CPT\Reason_CPT' );
-		$server_group_cpt = $this->container->get( 'crinis\cb\Controller\CPT\Server_Group_CPT' );
-		$register_cpt = $this->container->get( 'crinis\cb\Controller\Register_CPT' );
-		$register_cpt->add( $admin_cpt );
-		$register_cpt->add( $group_cpt );
-		$register_cpt->add( $server_cpt );
-		$register_cpt->add( $reason_cpt );
-		$register_cpt->add( $ban_cpt );
-		$register_cpt->add( $server_group_cpt );
+
+		$this->add_custom_post_types();
+		$this->add_shortcodes();
+
+		$this->add_actions();
+		$this->add_filters();
+		$this->loader->run();
+
+	}
+
+	public function add_shortcodes() {
 
 		$admin_post_shortcode = $this->container->get( 'crinis\cb\Controller\Shortcodes\Admin_Post_Shortcode' );
 		$ban_post_shortcode = $this->container->get( 'crinis\cb\Controller\Shortcodes\Ban_Post_Shortcode' );
@@ -68,42 +69,60 @@ class Crinisbans {
 		$register_shortcode->add( $group_post_list_shortcode );
 		$register_shortcode->add( $server_group_post_list_shortcode );
 
-		$this->add_actions();
-		$this->add_filters();
+	}
 
-		$this->loader->run();
+	public function add_custom_post_types() {
+
+		$admin_cpt = $this->container->get( 'crinis\cb\Controller\CPT\Admin_CPT' );
+		$group_cpt = $this->container->get( 'crinis\cb\Controller\CPT\Group_CPT' );
+		$server_cpt = $this->container->get( 'crinis\cb\Controller\CPT\Server_CPT' );
+		$ban_cpt = $this->container->get( 'crinis\cb\Controller\CPT\Ban_CPT' );
+		$reason_cpt = $this->container->get( 'crinis\cb\Controller\CPT\Reason_CPT' );
+		$server_group_cpt = $this->container->get( 'crinis\cb\Controller\CPT\Server_Group_CPT' );
+		$register_cpt = $this->container->get( 'crinis\cb\Controller\Register_CPT' );
+		$register_cpt->add( $admin_cpt );
+		$register_cpt->add( $group_cpt );
+		$register_cpt->add( $server_cpt );
+		$register_cpt->add( $reason_cpt );
+		$register_cpt->add( $ban_cpt );
+		$register_cpt->add( $server_group_cpt );
+
 	}
 
 	public function add_actions() {
 
-		$this->loader->add_action( 'admin_menu', $this->settings, 'cb_add_admin_menu' , 10, 2 );
-		$this->loader->add_action( 'admin_init', $this->settings, 'cb_settings_init' , 10, 2 );
-
 		$actions = $this->container->get( 'crinis\cb\Controller\Actions' );
 		$this->loader->add_action( 'profile_update', $actions, 'profile_update' , 10, 2 );
 		$this->loader->add_action( 'cb_post_updated', $actions, 'post_updated', 10, 3 );
-		$this->loader->add_action( 'cb_post_before_update', $actions, 'post_before_update', 10, 3 );
+		$this->loader->add_action( 'cb_before_post_update', $actions, 'before_post_update', 10, 3 );
 		$this->loader->add_action( 'cb_cache_server_data', $actions, 'cache_server_data', 10 );
-
-		$this->loader->add_action( 'admin_enqueue_scripts', $this, 'enqueue_admin_scripts', 10 );
-		$this->loader->add_action( 'admin_enqueue_scripts', $this, 'enqueue_styles', 10 );
-
-		$this->loader->add_action( 'wp_enqueue_scripts', $this, 'enqueue_styles', 10 );
+		$this->loader->add_action( 'cb_enqueue_frontend_scripts', $actions, 'enqueue_frontend_scripts', 10, 1 );
+		$this->loader->add_action( 'admin_enqueue_scripts', $actions, 'enqueue_admin_scripts', 10 );
+		$this->loader->add_action( 'admin_enqueue_scripts', $actions, 'enqueue_styles', 10 );
+		$this->loader->add_action( 'wp_enqueue_scripts', $actions, 'enqueue_styles', 10 );
 
 		$server_ajax = $this->container->get( 'crinis\cb\Controller\Ajax\Server_Ajax' );
 		$this->loader->add_action( 'wp_ajax_' . $server_ajax->get_name(), $server_ajax, 'ajax' );
 		$this->loader->add_action( 'wp_ajax_nopriv_' . $server_ajax->get_name(), $server_ajax, 'ajax' );
+
+		$settings_page = $this->container->get( 'crinis\cb\Controller\Settings_Page' );
+		$this->loader->add_action( 'admin_menu', $settings_page, 'add_menu_item' , 10, 2 );
+		$this->loader->add_action( 'admin_init', $settings_page, 'init_page' , 10, 2 );
+
 	}
 
 	public function add_filters() {
+
 		$filters = $this->container->get( 'crinis\cb\Model\Filters' );
 		$this->loader->add_filter( 'cb_json_serialize', $filters,'json_serialize', 10, 2 );
 		$this->loader->add_filter( 'cron_schedules', $filters,'cron_schedules' );
 		$this->loader->add_filter( 'comments_open', $filters,'close_ban_comments' );
 		$this->loader->add_filter( 'comments_array', $filters,'hide_ban_comments' );
+
 	}
 
 	public function activate() {
+
 		if ( ! current_user_can( 'activate_plugins' ) ) {
 			return;
 		}
@@ -137,13 +156,13 @@ class Crinisbans {
 		$cron = $this->container->get( 'crinis\cb\Controller\Cron' );
 		$cron->enable_cronjobs();
 
-		$old_version = ltrim( $this->settings->get( 'version' ), 'v' );
-		$new_version = ltrim( 'v0.2.1', 'v' );
-		if ( version_compare( $old_version, $new_version, '<=' ) ) {
-			$this->settings->set( 'version','v0.2.1' );
+		$old_version = $this->options->get( 'version' );
+
+		if ( version_compare( $old_version, CB_VERSION, '<=' ) ) {
+			$this->options->set( 'version', CB_VERSION );
 			return;
 		}
-		$this->settings->set( 'version','v0.2.1' );
+		$this->options->set( 'version', CB_VERSION );
 		/*
 		Setup all tables.
 		*/
@@ -206,9 +225,11 @@ class Crinisbans {
 		if ( ! $servers_server_groups_db->add_foreign_keys() ) {
 			return false;
 		}
+
 	}
 
 	public function deactivate() {
+
 		if ( ! current_user_can( 'activate_plugins' ) ) {
 			return;
 		}
@@ -218,9 +239,11 @@ class Crinisbans {
 
 		$cron = $this->container->get( 'crinis\cb\Controller\Cron' );
 		$cron->disable_cronjobs();
+
 	}
 
 	public static function uninstall() {
+
 		if ( ! current_user_can( 'activate_plugins' ) ) {
 			return;
 		}
@@ -262,19 +285,8 @@ class Crinisbans {
 		$servers_server_groups_db->drop_table();
 		$admins_groups_db = $this->container->get( 'crinis\cb\Model\DB\Admins_Groups_DB' );
 		$admins_groups_db->drop_table();
-	}
 
-	public function enqueue_admin_scripts() {
-		wp_enqueue_script( 'cb-backend', CB_URL . '/dist/backend.bundle.js',[ 'jquery-ui-widget' ] );
 	}
-
-	public function enqueue_styles() {
-		wp_enqueue_style( 'cb-vue', CB_URL . '/dist/styles.css' );
-	}
-
-	/*
-	Main Javascript is included inside of specific controllers
-	*/
 
 }
 

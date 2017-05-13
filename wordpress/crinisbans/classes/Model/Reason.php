@@ -1,5 +1,5 @@
 <?php
-namespace crinis\cb\Model\Domain;
+namespace crinis\cb\Model;
 
 class Reason extends Model {
 
