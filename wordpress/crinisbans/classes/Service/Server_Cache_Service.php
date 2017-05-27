@@ -37,7 +37,7 @@ class Server_Cache_Service {
 			return true;
 		}
 
-		$max_time_until_expiration = (0.5 * MINUTE_IN_SECONDS * 1000) / 30;
+		$max_time_until_expiration = (0.2 * MINUTE_IN_SECONDS);
 		if ( ( time() - $transient['timestamp'] ) < $max_time_until_expiration ) {
 			return true;
 		}

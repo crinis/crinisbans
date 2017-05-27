@@ -5,14 +5,14 @@ defined( 'ABSPATH' ) || die( 'No script kiddies please!' );
 * Plugin Name: Crinisbans
 * Plugin URI: https://crinis.org
 * Description: Admin, Ban and Server Manager for Counterstrike: Global Offensive servers
-* Version: 0.2.2
+* Version: 0.2.3
 * Author: crinis
 * Author URI: crinis.org
 */
 
 define( 'CB_PATH', plugin_dir_path( __FILE__ ) );
 define( 'CB_URL', WP_PLUGIN_URL . '/' . dirname( plugin_basename( __FILE__ ) ) );
-define( 'CB_VERSION', '0.2.2' );
+define( 'CB_VERSION', '0.2.3' );
 require 'vendor/autoload.php';
 
 

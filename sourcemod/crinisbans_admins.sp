@@ -2,7 +2,7 @@
 * Crinisbans: Admins
 *
 * @author crinis
-* @version 0.2.2
+* @version 0.2.3
 * @link https://www.crinis.org
 */
 #pragma newdecls required
