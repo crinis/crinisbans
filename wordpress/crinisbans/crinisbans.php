@@ -5,7 +5,7 @@ defined( 'ABSPATH' ) || die( 'No script kiddies please!' );
 * Plugin Name: Crinisbans
 * Plugin URI: https://crinis.org
 * Description: Admin, Ban and Server Manager for Counterstrike: Global Offensive servers
-* Version: v0.2.1
+* Version: 0.2.2
 * Author: crinis
 * Author URI: crinis.org
 */

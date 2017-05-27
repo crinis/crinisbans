@@ -2,7 +2,7 @@
 * Crinisbans: Core include
 *
 * @author crinis
-* @version v0.2.1
+* @version 0.2.2
 * @link https://www.crinis.org
 */
 #pragma newdecls required
@@ -13,7 +13,7 @@
 #endif
 #define _crinisbans_included
 
-#define CB_VERSION	"v0.2.1"
+#define CB_VERSION	"0.2.2"
 //#define _DEBUG
 
 public SharedPlugin __pl_crinisbans =
