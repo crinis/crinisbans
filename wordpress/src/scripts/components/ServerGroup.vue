@@ -9,7 +9,7 @@
     </div>
     <div class="column is-full">
       <ServerList :text="text"
-                  :serverCount="serverGroup.serverPostIDs.length"
+                  :serverCount="serverGroup.servers.length"
                   :servers="serverGroup.servers"></ServerList>
     </div>
   </div>

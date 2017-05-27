@@ -6,12 +6,10 @@ use \crinis\cb\Helper\Util;
 class Server_Group_Post_Shortcode extends Post_Shortcode {
 	protected static $name = 'cb_server_group_show';
 
-	private $server_repository;
 	private $server_group_repository;
 	private $util;
 
-	public function __construct( Repository $server_repository, Repository $server_group_repository, Util $util ) {
-		$this->server_repository = $server_repository;
+	public function __construct( Repository $server_group_repository, Util $util ) {
 		$this->server_group_repository = $server_group_repository;
 		$this->util = $util;
 	}
@@ -35,7 +33,7 @@ class Server_Group_Post_Shortcode extends Post_Shortcode {
 		$cb_env['text']['viewPlayers'] = __( 'View current players','crinisbans' );
 
 		do_action( 'cb_enqueue_frontend_scripts', $cb_env );
-		
+
 		ob_start();
 		require( CB_PATH . 'classes/View/Templates/Server_Group_Post.php' );
 		return ob_get_clean();

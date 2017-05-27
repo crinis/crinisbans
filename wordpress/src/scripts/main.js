@@ -11,11 +11,16 @@ Vue.http.options.emulateHTTP = true
 
 import '../styles/custom.scss'
 
-function fetchServers (serverPostIDs, nonce, onReceiveServers) {
+function fetchServers (servers, nonce, onReceiveServers) {
   let ajax = {}
   ajax['action'] = 'cb_server_ajax'
   ajax['nonce'] = nonce
-  ajax['serverPostIDs'] = serverPostIDs
+  ajax['serverPostIDs'] = []
+
+  servers.forEach(function (server, index) {
+    ajax['serverPostIDs'][index] = server.postID
+  })
+
   Vue.http.post(cbEnv.ajaxUrl, ajax).then(onReceiveServers, function () { })
 }
 
@@ -42,7 +47,7 @@ if (document.querySelector('#cb-server-group-post-list')) {
       updateServerGroupList: function () {
         let context = this
         this.serverGroups.forEach(function (serverGroup, index) {
-          fetchServers(serverGroup.serverPostIDs, cbEnv.nonce, function (response) {
+          fetchServers(serverGroup.servers, cbEnv.nonce, function (response) {
             serverGroup.servers = response.body
             context.serverGroups[index] = serverGroup
           })
@@ -74,7 +79,7 @@ if (document.querySelector('#cb-server-group-post')) {
     data: {
       servers: cbEnv.serverGroup.servers,
       text: cbEnv.text,
-      serverCount: cbEnv.serverGroup.serverPostIDs.length
+      serverCount: cbEnv.serverGroup.servers.length
     },
     components: {
       ServerList: ServerList
@@ -82,7 +87,7 @@ if (document.querySelector('#cb-server-group-post')) {
     methods: {
       updateServerGroup: function () {
         let context = this
-        fetchServers(cbEnv.serverGroup.serverPostIDs, cbEnv.nonce, function (response) {
+        fetchServers(cbEnv.serverGroup.servers, cbEnv.nonce, function (response) {
           context.servers = response.body
         })
       }

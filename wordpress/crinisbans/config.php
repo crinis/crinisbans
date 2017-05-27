@@ -44,7 +44,6 @@ return [
 		->constructorParameter( 'reason_repository', DI\get( 'crinis\cb\Model\Repository\Reason_Repository' ) )
 		->constructorParameter( 'util', DI\get( 'crinis\cb\Helper\Util' ) ),
 	    'crinis\cb\Controller\Shortcodes\Server_Group_Post_Shortcode' => DI\object()
-		->constructorParameter( 'server_repository', DI\get( 'crinis\cb\Model\Repository\Server_Repository' ) )
 		->constructorParameter( 'server_group_repository', DI\get( 'crinis\cb\Model\Repository\Server_Group_Repository' ) )
 		->constructorParameter( 'util', DI\get( 'crinis\cb\Helper\Util' ) ),
 	    'crinis\cb\Controller\Shortcodes\Server_Post_Shortcode' => DI\object()

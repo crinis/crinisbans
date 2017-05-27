@@ -60,4 +60,4 @@ class Settings_Page {
 		require( CB_PATH . 'classes/View/Templates/Settings/Settings_Page.php' );
 	}
 }
-?>
+
