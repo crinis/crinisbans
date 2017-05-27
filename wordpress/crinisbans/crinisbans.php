@@ -95,7 +95,6 @@ class Crinisbans {
 		$this->loader->add_action( 'profile_update', $actions, 'profile_update' , 10, 2 );
 		$this->loader->add_action( 'cb_post_updated', $actions, 'post_updated', 10, 3 );
 		$this->loader->add_action( 'cb_before_post_update', $actions, 'before_post_update', 10, 3 );
-		$this->loader->add_action( 'cb_cache_server_data', $actions, 'cache_server_data', 10 );
 		$this->loader->add_action( 'cb_enqueue_frontend_scripts', $actions, 'enqueue_frontend_scripts', 10, 1 );
 		$this->loader->add_action( 'admin_enqueue_scripts', $actions, 'enqueue_admin_scripts', 10 );
 		$this->loader->add_action( 'admin_enqueue_scripts', $actions, 'enqueue_styles', 10 );
@@ -115,7 +114,6 @@ class Crinisbans {
 
 		$filters = $this->container->get( 'crinis\cb\Model\Filters' );
 		$this->loader->add_filter( 'cb_json_serialize', $filters,'json_serialize', 10, 2 );
-		$this->loader->add_filter( 'cron_schedules', $filters,'cron_schedules' );
 		$this->loader->add_filter( 'comments_open', $filters,'close_ban_comments' );
 		$this->loader->add_filter( 'comments_array', $filters,'hide_ban_comments' );
 
@@ -152,9 +150,6 @@ class Crinisbans {
 			$admin->add_cap( 'cb_reason' );
 			$admin->add_cap( 'cb_delete' );
 		}
-
-		$cron = $this->container->get( 'crinis\cb\Controller\Cron' );
-		$cron->enable_cronjobs();
 
 		$old_version = $this->options->get( 'version' );
 
@@ -236,9 +231,6 @@ class Crinisbans {
 
 		$plugin = isset( $_REQUEST['plugin'] ) ? $_REQUEST['plugin'] : '';
 		check_admin_referer( "deactivate-plugin_{$plugin}" );
-
-		$cron = $this->container->get( 'crinis\cb\Controller\Cron' );
-		$cron->disable_cronjobs();
 
 	}
 

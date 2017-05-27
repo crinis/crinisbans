@@ -27,7 +27,7 @@ class Server_Group_Post_List_Shortcode extends Post_List_Shortcode {
 		$cb_env['text']['serverConnect'] = __( 'Connect to gameserver','crinisbans' );
 		$cb_env['text']['gotvConnect'] = __( 'Connect to GOTV','crinisbans' );
 		$cb_env['text']['viewPlayers'] = __( 'View current players','crinisbans' );
-		
+
 		do_action( 'cb_enqueue_frontend_scripts', $cb_env );
 
 		ob_start();

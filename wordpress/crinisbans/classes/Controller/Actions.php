@@ -75,20 +75,6 @@ class Actions {
 		}
 	}
 
-	public function cache_server_data() {
-		$servers = $this->server_repository->get_all();
-		foreach ( $servers as $server ) {
-			if ( ! $server->has_rcon() || ! $this->rcon_service->connect( $server ) ) {
-				continue;
-			}
-			$server_data = [];
-			$server_data['serverInfo'] = $this->rcon_service->get_server_info();
-			$server_data['players'] = $this->rcon_service->get_players();
-			set_transient( 'cb_server_data_cache_' . $server->get_post_id(),$server_data, 10 * MINUTE_IN_SECONDS );
-		}
-		return true;
-	}
-
 	public function enqueue_admin_scripts() {
 		wp_enqueue_script( 'cb-backend', CB_URL . '/dist/backend.bundle.js',[ 'jquery-ui-widget' ] );
 	}
