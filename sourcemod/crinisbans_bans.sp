@@ -2,7 +2,7 @@
 * Crinisbans: Bans
 *
 * @author crinis
-* @version 0.2.3
+* @version 0.2.4
 * @link https://www.crinis.org
 */
 
