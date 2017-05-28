@@ -61,9 +61,6 @@ export default {
       let order = this.sortOrders[sortKey] || 1
       let players = []
       this.ajaxPlayers.forEach(function (ajaxPlayer, key) {
-        if (!ajaxPlayer || !ajaxPlayer.steamID64 || ajaxPlayer.steamID64.length === 0) {
-          return
-        }
         players[key] = {
           nickName: ajaxPlayer.nickName,
           score: ajaxPlayer.score,
