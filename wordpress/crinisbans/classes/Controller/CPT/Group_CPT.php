@@ -54,6 +54,7 @@ class Group_CPT implements I_CPT {
 		$attrs = [];
 		$attrs['group'] = $this->group_repository->get( $post->ID, false );
 		$attrs['all_flags'] = $this->group_repository->get_all_flags();
+		// get all caps of role
 		wp_nonce_field( self::POST_TYPE_NAME . '_action', self::POST_TYPE_NAME . '_nonce' );
 		require( CB_PATH . 'classes/View/Templates/Group_CPT_Meta_Box.php' );
 	}

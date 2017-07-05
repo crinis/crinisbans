@@ -51,18 +51,54 @@ class Actions {
 
 	public function post_updated( $new, $old ) {
 		if ( $new instanceof Admin || $new instanceof Group ) {
-			$servers = $this->server_repository->get_all();
-			foreach ( $servers as $server ) {
-				if ( $this->rcon_service->connect( $server ) ) {
-					$this->rcon_service->reload_admins();
-				}
+			if ( $new instanceof Admin ) {
+				$this->admin_post_updated( $new, $old );
+			} else {
+				$this->group_post_updated( $new, $old );
 			}
+			$this->reload_admins();
 		} elseif ( $new instanceof Ban ) {
 			$this->ban_post_updated( $new, $old );
 		}
 	}
 
-	public function ban_post_updated( $object ) {
+	private function reload_admins() {
+		$servers = $this->server_repository->get_all();
+		foreach ( $servers as $server ) {
+			if ( $this->rcon_service->connect( $server ) ) {
+				$this->rcon_service->reload_admins();
+			}
+		}
+	}
+
+	public function admin_post_updated( $new, $old ) {
+		if ( 'publish' === $new->get_status() ) {
+			/*
+			add admin to role
+			make sure that role gets removed from old user if changed
+			*/
+		} else {
+			/*
+			remove user old,new from role
+			*/
+		}
+	}
+
+	public function group_post_updated( $new, $old ) {
+		if ( 'publish' === $new->get_status() ) {
+			/*
+			create role if necessary
+			and add flags
+			*/
+		} else {
+			/*
+			remove role if necessary
+			and remove flags
+			*/
+		}
+	}
+
+	private function ban_post_updated( $object ) {
 		$reason = $this->reason_repository->get( $object->get_reason_post_id() );
 		if ( ! $reason ) {
 			return;
