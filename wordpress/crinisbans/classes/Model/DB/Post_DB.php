@@ -41,10 +41,11 @@ abstract class Post_DB extends DB {
 		$update = $wpdb->update( $this->table, $data, array(
 			'post_id' => $post_id,
 		),$this->get_data_format( $data ),'%d' );
-		if ( $update ) {
+		$success = $update !== false ? true : false;
+		if ( $success ) {
 			wp_cache_set( $this->table, $this->cache_id + 1 );
 		}
-		return $update;
+		return $success;
 	}
 
 	public function delete_by_post_id( $post_id ) {

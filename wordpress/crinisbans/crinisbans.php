@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || die( 'No script kiddies please!' );
 
 define( 'CB_PATH', plugin_dir_path( __FILE__ ) );
 define( 'CB_URL', WP_PLUGIN_URL . '/' . dirname( plugin_basename( __FILE__ ) ) );
-define( 'CB_VERSION', '0.2.4' );
+define( 'CB_VERSION', '0.2.5' );
 require 'vendor/autoload.php';
 
 
@@ -153,10 +153,10 @@ class Crinisbans {
 
 		$old_version = $this->options->get( 'version' );
 
-		if ( version_compare( $old_version, CB_VERSION, '<=' ) ) {
-			$this->options->set( 'version', CB_VERSION );
+		if ( $old_version && version_compare( $old_version, CB_VERSION, '>=' ) ) {
 			return;
 		}
+
 		$this->options->set( 'version', CB_VERSION );
 		/*
 		Setup all tables.

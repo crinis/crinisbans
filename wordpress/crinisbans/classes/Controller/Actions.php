@@ -7,6 +7,8 @@ use \crinis\cb\Model\Group;
 use \crinis\cb\Helper\Util;
 use \crinis\cb\Model\Repository\Repository;
 use \crinis\cb\Service\RCON_Service;
+use \crinis\cb\Service\Role_Service;
+use \crinis\cb\Service\Capability_Service;
 
 class Actions {
 
@@ -15,19 +17,25 @@ class Actions {
 	private $server_repository;
 	private $reason_repository;
 	private $rcon_service;
+	private $role_service;
+	private $capability_service;
 
 	public function __construct(
 		Util $util,
 		Repository $admin_repository,
 		Repository $server_repository,
 		Repository $reason_repository,
-		RCON_Service $rcon_service
+		RCON_Service $rcon_service,
+		Role_Service $role_service,
+		Capability_Service $capability_service
 	) {
 		$this->util = $util;
 		$this->admin_repository = $admin_repository;
 		$this->server_repository = $server_repository;
 		$this->reason_repository = $reason_repository;
 		$this->rcon_service = $rcon_service;
+		$this->role_service = $role_service;
+		$this->capability_service = $capability_service;
 	}
 
 	public function profile_update( $user_id, $old_user_data ) {
@@ -73,28 +81,33 @@ class Actions {
 
 	public function admin_post_updated( $new, $old ) {
 		if ( 'publish' === $new->get_status() ) {
-			/*
-			add admin to role
-			make sure that role gets removed from old user if changed
-			*/
+			$new_group_post_ids = $new->get_group_post_ids();
+			$old_group_post_ids = $old->get_group_post_ids();
+			$removed_group_post_ids = array_diff( $new_group_post_ids,$old_group_post_ids );
+			$added_group_post_ids = array_diff( $old_group_post_ids,$new_group_post_ids );
+			$added_groups = $this->group_repository->get_by_post_ids($added_group_post_ids);
+			$removed_groups = $this->group_repository->get_by_post_ids($removed_group_post_ids);
+
+			$this->role_service->add_roles_to_admin($admin, $added_groups);
+			$this->role_service->remove_roles_from_admin($admin, $removed_groups);
 		} else {
-			/*
-			remove user old,new from role
-			*/
+			$groups = $this->group_repository->get_all();
+			$this->role_service->remove_roles_from_admin($admin, $groups);
 		}
 	}
 
 	public function group_post_updated( $new, $old ) {
+		$role = $this->role_service->create_role($new);
+		$this->capability_service->set_capabilities($role,$_POST['cb-capabilities']);
+		$admins = $this->admin_repository->get_by_group($new);
 		if ( 'publish' === $new->get_status() ) {
-			/*
-			create role if necessary
-			and add flags
-			*/
+			foreach ( $admins as $admin ) {
+				$this->role_service->add_role_to_admin ( $new, $admin );
+			}
 		} else {
-			/*
-			remove role if necessary
-			and remove flags
-			*/
+			foreach ( $admins as $admin ) {
+				$this->role_service->remove_role_from_admin ( $new, $admin );
+			}
 		}
 	}
 

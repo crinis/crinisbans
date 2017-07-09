@@ -22,5 +22,17 @@
 			}
 			?>
 		</div>
+		<div class="column">
+			<h3><?php esc_html_e( 'WordPress role capabilities','crinisbans' )?></h3>
+			<?php
+			foreach ( $attrs['capabilities'] as $key => $value ) {
+				?>
+				<input <?php checked( $value )?> value="1" type="checkbox" id="cb-capabilities_<?php echo esc_attr( $key )?>" name="cb-capabilities[<?php echo esc_attr( $key )?>]" />
+				<label for="cb-capabilities_<?php echo esc_attr( $key )?>"><?php echo esc_html( $key )?></label>
+				<br>
+				<?php
+			}
+			?>
+		</div>
 	</div>
 </div>

@@ -17,33 +17,33 @@ class Capability_Service {
         ];
     }
 
-    public function get_role_capabilities($role){
+    public function get_capabilities($role){
         $capabilities = [];
         foreach ($this->capabilities as $capability) {
-            if ( $this->has_enabled_role_capability($role, $role->capabilities[$capability]) ) {
-                $capabilities[$capability] = 1;
+            if ( $this->has_capability($role, $capability) ) {
+                $capabilities[$capability] = '1';
             } else {
-                $capabilities[$capability] = 0;
+                $capabilities[$capability] = '0';
             }
         }
         return $capabilities;
     }
 
-    public function set_role_capabilities($role, $capabilities){
+    public function set_capabilities($role, $capabilities){
         foreach ($this->capabilities as $capability) {
-            if ( $this->has_enabled_role_capability($role, $role->capabilities[$capability]) ) {
-                add_cap($role, $capability);
-            } else {
-                remove_cap($role, $capability);
+            if ( '1' === $capabilities[$capability] && !$this->has_capability($role, $capability) ) {
+               $role->add_cap($capability);
+            } else if($this->has_capability($role, $capability)) {
+                $role->remove_cap($capability);
             }
         }
     }
 
-    public function has_enabled_role_capability($role, $capability){
+    public function has_capability($role, $capability){
         if (!in_array($capability, $this->capabilities)) {
             return false;
         }
-        return $role->capabilities[$capability] === 1 ? true : false;
+        return $role->capabilities[$capability];
     }
 
 }

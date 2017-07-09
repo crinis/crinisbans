@@ -3,6 +3,8 @@ namespace crinis\cb\Controller\CPT;
 use \crinis\cb\Model\Repository\Repository;
 use \crinis\cb\View\Viewhelper\I_Viewhelper;
 use \crinis\cb\Helper\Util;
+use \crinis\cb\Service\Role_Service;
+use \crinis\cb\Service\Capability_Service;
 
 class Group_CPT implements I_CPT {
 
@@ -13,15 +15,21 @@ class Group_CPT implements I_CPT {
 	private $group_repository;
 	private $util;
 	private $viewhelper;
+	private $role_service;
+	private $capability_service;
 
 	public function __construct(
 		Repository $group_repository,
 		I_Viewhelper $viewhelper,
-		Util $util
+		Util $util,
+		Role_Service $role_service,
+		Capability_Service $capability_service
 	) {
 		$this->group_repository = $group_repository;
 		$this->viewhelper = $viewhelper;
 		$this->util = $util;
+		$this->role_service = $role_service;
+		$this->capability_service = $capability_service;
 	}
 
 	public function get_config() {
@@ -54,7 +62,9 @@ class Group_CPT implements I_CPT {
 		$attrs = [];
 		$attrs['group'] = $this->group_repository->get( $post->ID, false );
 		$attrs['all_flags'] = $this->group_repository->get_all_flags();
-		// get all caps of role
+		$role = $this->role_service->get_role($attrs['group']);
+		$attrs['capabilities'] = $this->capability_service->get_capabilities($role);
+
 		wp_nonce_field( self::POST_TYPE_NAME . '_action', self::POST_TYPE_NAME . '_nonce' );
 		require( CB_PATH . 'classes/View/Templates/Group_CPT_Meta_Box.php' );
 	}
