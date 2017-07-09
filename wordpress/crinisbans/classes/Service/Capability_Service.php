@@ -31,8 +31,10 @@ class Capability_Service {
 
     public function set_capabilities($role, $capabilities){
         foreach ($this->capabilities as $capability) {
-            if ( '1' === $capabilities[$capability] && !$this->has_capability($role, $capability) ) {
-               $role->add_cap($capability);
+            if ( '1' === $capabilities[$capability] ) {
+                if (!$this->has_capability($role, $capability)) {
+                    $role->add_cap($capability);
+                }
             } else if($this->has_capability($role, $capability)) {
                 $role->remove_cap($capability);
             }

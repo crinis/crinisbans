@@ -5,7 +5,7 @@ class Role_Service {
 
     public function create_role($group) {
         $role_name = $this->get_role_name($group);
-        $role = add_role( $role, $role );
+        $role = add_role( $role_name, $role_name );
         if ( !$role ) {
             $role = $this->get_role($group);
         }
