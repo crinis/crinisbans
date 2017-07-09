@@ -17,31 +17,6 @@
 				?>
 			</select>
 		</div>
-		<?php
-		if ( $this->options->get( 'show_admin_perms' ) ) {?>
-			<div class="column">
-				<label for="cb-immunity"><?php esc_html_e( 'Immunity', 'crinisbans' )?></label>
-				<input type="text" id="cb-immunity" name="cb-immunity" value="<?php echo esc_attr( $attrs['admin']->get_immunity() ) ?>" />
-			</div>
-			<div class="column">
-				<h3><?php esc_html_e( 'Flags','crinisbans' )?></h3>
-				<?php
-				$current_flags = $attrs['admin']->get_flags();
-				foreach ( $attrs['all_flags'] as $key => $value ) {
-					if ( 1 === $current_flags[ $key ] ) {
-						$flag_enabled = true;
-					} else {
-						$flag_enabled = false;
-					}
-					?>
-					<input <?php checked( $flag_enabled )?> value="<?php echo esc_attr( $key )?>" type="checkbox" id="cb-flags_<?php echo esc_attr( $key )?>" name="cb-flags[]" />
-					<label for="cb-flags_<?php echo esc_attr( $key )?>"><?php echo esc_html( $this->util->explain_flag( $key ) )?></label>
-					<br>
-					<?php
-				}
-				?>
-			</div>
-		<?php }?>
 		<?php $this->viewhelper->object_list( 'cb-groups','Groups',$attrs['all_groups'],$attrs['admin']->get_group_post_ids() ) ?>
 	</div>
 </div>

@@ -5,8 +5,6 @@ class Admin extends Model {
 
 	private $user_id;
 	private $steam_ids_64;
-	private $flags;
-	private $immunity;
 	private $group_post_ids;
 
 	public function set_init_data( $data ) {
@@ -14,13 +12,10 @@ class Admin extends Model {
 		if ( empty( $data['row'] ) ) {
 			$this->steam_ids_64 = [];
 			$this->group_post_ids = [];
-			$this->flags = [];
 			return;
 		}
 		$this->user_id = $data['row']['user_id'];
 		$this->steam_ids_64 = empty( $data['row']['steam_ids_64'] ) ? [] : explode( ',',$data['row']['steam_ids_64'] );
-		$this->flags = $this->util->get_array_by_matching_keys( $data['row'],'/^flag_/' );
-		$this->immunity = $data['row']['immunity'];
 		$this->group_post_ids = empty( $data['group_post_ids'] ) ? [] : $data['group_post_ids'];
 	}
 
@@ -87,47 +82,6 @@ class Admin extends Model {
 		$this->set_title( get_userdata( $user_id )->display_name );
 		$this->user_id = $user_id;
 		return true;
-	}
-
-	public function get_immunity() {
-		return $this->immunity;
-	}
-
-	public function set_immunity( $immunity ) {
-		if ( ! isset( $immunity ) || ! $this->validator->is_immunity( $immunity ) ) {
-			return false;
-		}
-		$this->immunity = $immunity;
-		return true;
-	}
-
-	public function get_flag( $name ) {
-		return $this->flags[ $name ];
-	}
-
-	public function set_flag( $name, $value ) {
-		if ( ! isset( $name ) ) {
-			return false;
-		}
-		$this->flags[ $name ] = $value;
-		return true;
-	}
-
-	public function set_flags( $flags ) {
-		if ( ! is_array( $flags ) ) {
-			$flags = [];
-		}
-		foreach ( $this->flags as $key => $value ) {
-			if ( in_array( $key,$flags,true ) ) {
-				$this->set_flag( $key,true );
-			} else { $this->set_flag( $key,false );
-			}
-		}
-		return true;
-	}
-
-	public function get_flags() {
-		return $this->flags;
 	}
 
 	public function get_group_post_ids() {

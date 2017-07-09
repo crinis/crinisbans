@@ -29,20 +29,8 @@ class Admin_Repository extends Repository {
 		if ( $old->get_steam_ids_64() !== $new->get_steam_ids_64() ) {
 			$data['steam_ids_64'] = implode( ',',$new->get_steam_ids_64() );
 		}
-		if ( $old->get_immunity() !== $new->get_immunity() ) {
-			$data['immunity'] = $new->get_immunity();
-		}
 		if ( $old->get_user_id() !== $new->get_user_id() ) {
 			$data['user_id'] = $new->get_user_id();
-		}
-
-		$old_flags = $old->get_flags();
-		$new_flags = $new->get_flags();
-
-		foreach ( $this->get_all_flags() as $key => $value ) {
-			if ( $old_flags[ $key ] !== $new_flags[ $key ] ) {
-				$data[ $key ] = $new_flags[ $key ];
-			}
 		}
 		return $data;
 	}
@@ -90,9 +78,5 @@ class Admin_Repository extends Repository {
 			$init_data['group_post_ids'][] = $row['foreign_k'];
 		}
 		return $init_data;
-	}
-
-	public function get_all_flags() {
-		return $this->db->get_flags();
 	}
 }

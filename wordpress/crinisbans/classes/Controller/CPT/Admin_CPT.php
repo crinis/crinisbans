@@ -65,7 +65,6 @@ class Admin_CPT implements I_CPT {
 		$attrs = [];
 		$attrs['admin'] = $this->admin_repository->get( $post->ID, false );
 		$attrs['all_groups'] = $this->group_repository->get_all( false );
-		$attrs['all_flags'] = $this->admin_repository->get_all_flags();
 		wp_nonce_field( self::POST_TYPE_NAME . '_action', self::POST_TYPE_NAME . '_nonce' );
 		require( CB_PATH . 'classes/View/Templates/Admin_CPT_Meta_Box.php' );
 	}
@@ -84,11 +83,6 @@ class Admin_CPT implements I_CPT {
 		}
 
 		$admin->set_steam_ids_64( $steam_ids_64 );
-
-		if ( ! $this->options->get( 'hide_admin_perms' ) ) {
-			$admin->set_flags( $_POST['cb-flags'] );
-			$admin->set_immunity( $_POST['cb-immunity'] );
-		}
 
 		$admin->set_user_id( $_POST['cb-user-id'] );
 		$admin->set_group_post_ids( $_POST['cb-groups'] );

@@ -1,7 +1,7 @@
 <?php
 namespace crinis\cb\Model\DB;
 
-class Admins_DB extends Flags_DB {
+class Admins_DB extends DB {
 
 	public function __construct() {
 		parent::__construct();
