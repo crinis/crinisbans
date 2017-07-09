@@ -169,8 +169,8 @@ public void OnReceiveAdmins(Database db, DBResultSet rs, const char[] error, any
         return;
     }
     
-    char title[128], allFlags[32], steamID64[256];
-    int immunity, postID;
+    char title[128], steamID64[256];
+    int postID;
     AdminId adm;
     int postIDIndex, immunityIndex, titleIndex, flagIndex;
     /**
@@ -187,14 +187,11 @@ public void OnReceiveAdmins(Database db, DBResultSet rs, const char[] error, any
         rs.FieldNameToNum("post_id", postIDIndex);
         postID = rs.FetchInt(postIDIndex);
 
-        rs.FieldNameToNum("immunity", immunityIndex);
-        immunity = rs.FetchInt(immunityIndex);
-
         rs.FieldNameToNum("title", titleIndex);
         rs.FetchString(titleIndex, title, sizeof(title));
 
         #if defined _DEBUG
-            PrintToServer("Admin found: Title %s, Post ID %d, Steam ID %s, Admin Immunity %d", title, postID, steamID64, immunity);
+            PrintToServer("Admin found: Title %s, Post ID %d, Steam ID %s", title, postID, steamID64);
         #endif
 
         /* For dynamic admins we clear anything already in the cache. */
@@ -219,25 +216,6 @@ public void OnReceiveAdmins(Database db, DBResultSet rs, const char[] error, any
         #endif
 
         totalUsers++;
-
-        adm.ImmunityLevel = immunity;
-        
-        allFlags = "zabcdefghijklmnopqrst";
-
-        /* Apply each flag */
-        int flagCount = strlen(allFlags);
-        AdminFlag flag;
-        rs.FieldNameToNum("flag_z", flagIndex);
-        for (int i=0; i<flagCount; i++)
-        {
-            if(rs.FetchInt(flagIndex+i) == 1){
-                if (!FindFlagByChar(allFlags[i], flag))
-                {
-                    continue;
-                }
-                adm.SetFlag(flag, true);
-            }
-        }
     }
     
     /**
