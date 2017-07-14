@@ -7,6 +7,7 @@ use \crinis\cb\Model\Group;
 use \crinis\cb\Helper\Util;
 use \crinis\cb\Model\Repository\Repository;
 use \crinis\cb\Service\RCON_Service;
+use \crinis\cb\Service\Server_Cache_Service;
 
 class Actions {
 
@@ -21,13 +22,15 @@ class Actions {
 		Repository $admin_repository,
 		Repository $server_repository,
 		Repository $reason_repository,
-		RCON_Service $rcon_service
+		RCON_Service $rcon_service,
+		Server_Cache_Service $server_cache_service 
 	) {
 		$this->util = $util;
 		$this->admin_repository = $admin_repository;
 		$this->server_repository = $server_repository;
 		$this->reason_repository = $reason_repository;
 		$this->rcon_service = $rcon_service;
+		$this->server_cache_service = $server_cache_service;
 	}
 
 	public function profile_update( $user_id, $old_user_data ) {
@@ -73,6 +76,16 @@ class Actions {
 				$this->rcon_service->kick_player( $object->get_steam_id_64(),sprintf( 'You are banned from this server. Reason: %s',$reason->get_title() ) );
 			}
 		}
+	}
+	
+	public function rest_api_init() {
+		register_rest_field( 'cb-servers', 'live_data', [
+			'get_callback' => function( $post ) {
+				$servers = $this->server_repository->get_by_post_ids( [ $post['id'] ] );
+				$this->server_cache_service->cache_servers( $servers );
+				return wp_json_encode( $servers );
+			},
+		]);
 	}
 
 	public function enqueue_admin_scripts() {
