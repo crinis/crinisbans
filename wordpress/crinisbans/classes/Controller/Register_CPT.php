@@ -48,6 +48,7 @@ class Register_CPT implements I_Register_CPT {
 				'show_ui' => true,
 				'show_in_nav_menus' => true,
 				'show_in_menu' => true,
+				'show_in_rest' => true,
 				'show_in_admin_bar' => true,
 				'supports' => array_merge( [ 'thumbnail', 'page-attributes', 'comments', 'excerpt' ], $config['supports'] ),
 				'capabilities' => array(

@@ -99,6 +99,7 @@ class Crinisbans {
 		$this->loader->add_action( 'admin_enqueue_scripts', $actions, 'enqueue_admin_scripts', 10 );
 		$this->loader->add_action( 'admin_enqueue_scripts', $actions, 'enqueue_styles', 10 );
 		$this->loader->add_action( 'wp_enqueue_scripts', $actions, 'enqueue_styles', 10 );
+		$this->loader->add_action( 'rest_api_init', $actions, 'rest_api_init', 5 );
 
 		$server_ajax = $this->container->get( 'crinis\cb\Controller\Ajax\Server_Ajax' );
 		$this->loader->add_action( 'wp_ajax_' . $server_ajax->get_name(), $server_ajax, 'ajax' );

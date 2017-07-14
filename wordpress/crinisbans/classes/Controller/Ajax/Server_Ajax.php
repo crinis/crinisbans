@@ -27,7 +27,7 @@ class Server_Ajax {
 		$servers = $this->server_repository->get_by_post_ids( $_POST['serverPostIDs'] );
 		$this->server_cache_service->cache_servers( $servers );
 
-		exit( wp_json_encode( $this->server_repository->get_by_post_ids( $_POST['serverPostIDs'] ) ) );
+		exit( wp_json_encode( $servers ) );
 	}
 
 	public function get_name() {
